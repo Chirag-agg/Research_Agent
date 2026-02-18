@@ -1,0 +1,44 @@
+# Deep Research Agent Dependencies
+
+# Core
+python-dotenv>=1.0.0
+pydantic>=2.0.0
+requests>=2.31.0
+
+# LLM & AI
+# together>=1.0.0
+google-generativeai>=0.8.0
+openai>=1.0.0
+
+# Search & Scraping
+# exa-py>=1.0.0  # Uncomment when API key available
+# firecrawl-py>=0.1.0  # Uncomment when API key available
+
+# Data Processing
+PyPDF2>=3.0.0
+beautifulsoup4>=4.12.0
+markdown>=3.5.0
+
+# Testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+
+# Utilities
+httpx>=0.25.0
+tenacity>=8.2.0
+rich>=13.0.0
+
+# API
+fastapi>=0.100.0
+uvicorn>=0.23.0
+pydantic>=2.0.0
+python-multipart>=0.0.6
+openai>=1.0.0
+
+# V2 Storage & Memory
+supabase>=2.0.0
+mem0ai>=0.1.0
+
+# V2 Async Support
+aiohttp>=3.9.0
+

@@ -1,0 +1,239 @@
+# Deep Research Agent - Main Kestra Orchestration Flow
+# This workflow orchestrates the multi-agent research system
+
+id: deep-research-main
+namespace: deep-research-agent
+
+description: |
+  Main orchestration flow for the Deep Research Agent.
+  Coordinates Master Planner, Search Agents, Validator, and Reflexion loop.
+
+inputs:
+  - id: query
+    type: STRING
+    displayName: Research Query
+    description: The research question to investigate
+
+  - id: max_iterations
+    type: INT
+    displayName: Max Iterations
+    default: 3
+    description: Maximum reflexion iterations
+
+variables:
+  search_provider: "exa"
+  model: "meta-llama/Llama-3.1-70B-Instruct-Turbo"
+
+tasks:
+  # Phase 1: Query Decomposition
+  - id: decompose_query
+    type: io.kestra.plugin.scripts.python.Script
+    displayName: "MPA: Query Decomposition"
+    description: Break the research query into sub-queries
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install together python-dotenv requests
+    env:
+      TOGETHER_API_KEY: "{{ secret('TOGETHER_API_KEY') }}"
+    script: |
+      import os
+      import json
+      from together import Together
+
+      query = "{{ inputs.query }}"
+
+      client = Together(api_key=os.environ['TOGETHER_API_KEY'])
+
+      system_prompt = """You are a research planning agent. Decompose the query into 3-5 specific sub-queries.
+      Respond with JSON: {"sub_queries": ["query1", "query2", ...]}"""
+
+      response = client.chat.completions.create(
+          model="{{ vars.model }}",
+          messages=[
+              {"role": "system", "content": system_prompt},
+              {"role": "user", "content": f"Decompose: {query}"}
+          ],
+          temperature=0.3
+      )
+
+      content = response.choices[0].message.content
+      # Extract JSON
+      if "```json" in content:
+          content = content.split("```json")[1].split("```")[0]
+      elif "```" in content:
+          content = content.split("```")[1].split("```")[0]
+
+      result = json.loads(content.strip())
+      print(json.dumps(result))
+    outputFiles:
+      - "*.json"
+
+  # Phase 2: Parallel Search (would use flow.parallel in production)
+  - id: web_search
+    type: io.kestra.plugin.scripts.python.Script
+    displayName: "SSA: Web Search"
+    description: Execute web search using Exa/Tavily
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install requests
+    env:
+      EXA_API_KEY: "{{ secret('EXA_API_KEY') }}"
+    script: |
+      import os
+      import json
+      import requests
+
+      query = "{{ inputs.query }}"
+      api_key = os.environ.get('EXA_API_KEY')
+
+      if api_key:
+          headers = {
+              "Authorization": f"Bearer {api_key}",
+              "Content-Type": "application/json"
+          }
+          payload = {
+              "query": query,
+              "numResults": 5,
+              "type": "neural",
+              "useAutoprompt": True,
+              "contents": {"text": True}
+          }
+
+          response = requests.post(
+              "https://api.exa.ai/search",
+              headers=headers,
+              json=payload,
+              timeout=30
+          )
+          data = response.json()
+          findings = [
+              {"source": r["url"], "content": r.get("text", "")[:1000], "title": r.get("title", "")}
+              for r in data.get("results", [])
+          ]
+      else:
+          # Mock results for testing
+          findings = [{"source": "mock", "content": "Mock search result", "title": "Test"}]
+
+      print(json.dumps({"findings": findings}))
+
+  # Phase 3: Source Validation
+  - id: validate_sources
+    type: io.kestra.plugin.scripts.python.Script
+    displayName: "SVA: Source Validation"
+    description: Validate and score source reliability
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install together python-dotenv
+    env:
+      TOGETHER_API_KEY: "{{ secret('TOGETHER_API_KEY') }}"
+    script: |
+      import os
+      import json
+      from together import Together
+
+      # In production, this would receive findings from previous step
+      findings_json = '{{ outputs.web_search.outputFiles }}'
+
+      client = Together(api_key=os.environ['TOGETHER_API_KEY'])
+
+      system_prompt = """You are a source validation expert. Score each source 0.0-1.0 for reliability.
+      Respond with JSON: {"validated": [{"source": "url", "score": 0.8, "notes": "reason"}]}"""
+
+      response = client.chat.completions.create(
+          model="{{ vars.model }}",
+          messages=[
+              {"role": "system", "content": system_prompt},
+              {"role": "user", "content": f"Validate these sources: {findings_json}"}
+          ],
+          temperature=0.2
+      )
+
+      print(response.choices[0].message.content)
+
+  # Phase 4: Reflexion Check
+  - id: reflexion_check
+    type: io.kestra.plugin.scripts.python.Script
+    displayName: "Reflexion: Quality Check"
+    description: Evaluate if research is complete or needs more iteration
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install together python-dotenv
+    env:
+      TOGETHER_API_KEY: "{{ secret('TOGETHER_API_KEY') }}"
+    script: |
+      import os
+      import json
+      from together import Together
+
+      query = "{{ inputs.query }}"
+
+      client = Together(api_key=os.environ['TOGETHER_API_KEY'])
+
+      system_prompt = """Evaluate research quality. Respond with JSON:
+      {"continue": false, "quality": 0.8, "gaps": [], "reason": "sufficient coverage"}"""
+
+      response = client.chat.completions.create(
+          model="{{ vars.model }}",
+          messages=[
+              {"role": "system", "content": system_prompt},
+              {"role": "user", "content": f"Query: {query}\nEvaluate if research is complete."}
+          ],
+          temperature=0.3
+      )
+
+      content = response.choices[0].message.content
+      if "```json" in content:
+          content = content.split("```json")[1].split("```")[0]
+
+      result = json.loads(content.strip())
+      print(json.dumps(result))
+
+  # Phase 5: Final Synthesis
+  - id: synthesize_report
+    type: io.kestra.plugin.scripts.python.Script
+    displayName: "MPA: Synthesize Report"
+    description: Generate final research report
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install together python-dotenv
+    env:
+      TOGETHER_API_KEY: "{{ secret('TOGETHER_API_KEY') }}"
+    script: |
+      import os
+      from together import Together
+
+      query = "{{ inputs.query }}"
+
+      client = Together(api_key=os.environ['TOGETHER_API_KEY'])
+
+      response = client.chat.completions.create(
+          model="{{ vars.model }}",
+          messages=[
+              {"role": "system", "content": "You are a research synthesis expert. Create a comprehensive report."},
+              {"role": "user", "content": f"Synthesize findings for: {query}"}
+          ],
+          max_tokens=4096,
+          temperature=0.5
+      )
+
+      report = response.choices[0].message.content
+      print(report)
+
+outputs:
+  - id: research_report
+    type: STRING
+    value: "{{ outputs.synthesize_report.vars }}"
+
+triggers:
+  - id: manual_trigger
+    type: io.kestra.plugin.core.trigger.Flow
+    description: Trigger research via Kestra UI
+
+  - id: webhook_trigger
+    type: io.kestra.plugin.core.trigger.Webhook
+    key: "deep-research-webhook"

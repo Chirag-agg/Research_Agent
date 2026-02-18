@@ -1,0 +1,9 @@
+{
+  "devDependencies": {
+    "baseline-browser-mapping": "^2.10.0"
+  },
+  "dependencies": {
+    "postprocessing": "^6.38.3",
+    "three": "^0.183.1"
+  }
+}
