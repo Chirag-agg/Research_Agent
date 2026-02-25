@@ -1,9 +1,31 @@
-# Kestra Docker Compose for Local Development
+# Deep Research Agent - Docker Compose Configuration
 # Run: docker compose up -d
 
 version: "3.8"
 
 services:
+  # FastAPI Backend
+  backend:
+    build: .
+    container_name: research-agent-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - CEREBRAS_API_KEY=${CEREBRAS_API_KEY}
+      - EXA_API_KEY=${EXA_API_KEY}
+      - TAVILY_API_KEY=${TAVILY_API_KEY}
+      - FIRECRAWL_API_KEY=${FIRECRAWL_API_KEY}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      - QDRANT_URL=${QDRANT_URL}
+      - QDRANT_API_KEY=${QDRANT_API_KEY}
+    volumes:
+      - ./src:/app/src
+      - ./prompts:/app/prompts
+    command: uvicorn server:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
+
+  # Kestra Orchestration (Optional)
   kestra:
     image: kestra/kestra:latest
     container_name: kestra
