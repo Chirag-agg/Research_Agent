@@ -360,13 +360,6 @@ docker-compose up -d
 
 ---
 
-## Documentation
-
-- [Architecture Integration Guide](ARCHITECTURE_INTEGRATION_GUIDE.md) - Complete API reference for architecture generation
-- [Implementation Summary](IMPLEMENTATION_SUMMARY.md) - Quick reference guide
-- [Architecture Generator Docs](src/ARCHITECTURE_GENERATOR.md) - Technical deep-dive
-
----
 
 ## Contributing
 
