@@ -9,7 +9,6 @@
 [![Cerebras](https://img.shields.io/badge/LLM-Cerebras_Llama-FF6B35?style=flat-square)](https://cerebras.ai)
 [![Next.js](https://img.shields.io/badge/Frontend-Next.js_14-000000?style=flat-square&logo=next.js)](https://nextjs.org)
 [![Python](https://img.shields.io/badge/Python-3.11+-3776ab?style=flat-square&logo=python&logoColor=white)](https://python.org)
-[![License](https://img.shields.io/badge/License-Apache_2.0-D22128?style=flat-square&logo=apache)](LICENSE)
 
 </div>
 
