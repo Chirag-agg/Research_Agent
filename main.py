@@ -98,6 +98,12 @@ class DeepResearchOrchestratorV2:
         if use_memory:
             try:
                 self.memory_api = MemoryAPI()
+                if self.verbose:
+                    print("✅ Memory API initialized successfully")
+            except Exception as e:
+                print(f"⚠️ Warning: Could not initialize Memory API: {e}")
+                print("Continuing without memory persistence...")
+                self.memory_api = None
                 self.log("Memory API initialized")
             except Exception as e:
                 self.log(f"Memory API not available: {e}")
