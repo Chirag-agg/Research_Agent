@@ -2,53 +2,54 @@
 
 # Deep Research Agent
 
-### Autonomous, Hierarchical Research System with Verifiable Provenance
+### Autonomous, Hierarchical Research System with Production Architecture Generation
 
-[![Kestra](https://img.shields.io/badge/Orchestration-Kestra-6366f1?style=flat-square&logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0id2hpdGUiLz48L3N2Zz4=)](https://kestra.io)
-[![Supabase](https://img.shields.io/badge/Memory-Supabase-3ecf8e?style=flat-square&logo=supabase)](https://supabase.com)
-[![Mem0](https://img.shields.io/badge/Semantic-Mem0-purple?style=flat-square)](https://mem0.ai)
-[![Google Gemini](https://img.shields.io/badge/LLM-Google%20Gemini-4285F4?style=flat-square&logo=google)](https://deepmind.google/technologies/gemini/)
+[![Supabase](https://img.shields.io/badge/Storage-Supabase-3ecf8e?style=flat-square&logo=supabase)](https://supabase.com)
+[![Qdrant](https://img.shields.io/badge/Vector_DB-Qdrant-DC244C?style=flat-square)](https://qdrant.tech)
+[![Cerebras](https://img.shields.io/badge/LLM-Cerebras_Llama-FF6B35?style=flat-square)](https://cerebras.ai)
+[![Next.js](https://img.shields.io/badge/Frontend-Next.js_14-000000?style=flat-square&logo=next.js)](https://nextjs.org)
 [![Python](https://img.shields.io/badge/Python-3.11+-3776ab?style=flat-square&logo=python&logoColor=white)](https://python.org)
 [![License](https://img.shields.io/badge/License-Apache_2.0-D22128?style=flat-square&logo=apache)](LICENSE)
-[![Hackathon](https://img.shields.io/badge/Built%20for-Hackathon-D22128?style=flat-square)](https://hackathon.dev)
 
 </div>
 
 ---
 
-## Demo Video: 
-
-Click the image above to watch the demo video
-
-[![Deep Research Agent](https://img.youtube.com/vi/ABoEuW0wUTQ/maxresdefault.jpg)](https://youtu.be/ABoEuW0wUTQ)
-
----
-
 ## The Problem
-In an era of information overload, finding high-quality, verified answers to complex questions is difficult. Simple RAG (Retrieval-Augmented Generation) systems often fail on multi-step reasoning tasks and suffer from:
-1.  **Hallucination**: Inventing facts when sources are missing.
-2.  **Shallow Analysis**: Failing to connect dots across disparate sources.
-3.  **Lack of Provenance**: Giving answers without traceable evidence.
+Modern software development requires not just research, but actionable architecture recommendations. Traditional research tools and simple Q&A systems fail to:
+1. **Generate Production-Ready Plans**: Moving from research to implementation requires architecture expertise
+2. **Validate Complex Claims**: Multi-step reasoning across disparate sources is often shallow
+3. **Provide Verifiable Provenance**: Answers lack traceable evidence and citations
+4. **Consider Constraints**: Real-world requirements (scale, budget, compliance) are ignored
 
-## The Solution: Deep Research 
-The **Deep Research Agent** is an autonomous system designed to emulate a human researcher. It doesn't just search; it **plans, investigates, validates, and synthesizes**.
+## The Solution: Deep Research with Architecture Generation
+The **Deep Research Agent** is an autonomous system that goes beyond traditional research—it **plans, investigates, validates, synthesizes, and generates production-ready architectures**.
 
-### Core Methodology
-1.  **Hierarchical Planning**: Instead of a linear chain of thought, the agent builds a dynamic **Task Graph**. It breaks complex goals into sub-tasks (research, validation, extraction) and executes them in parallel.
-2.  **Evidence-First**: Every claim in the final report is backed by an **Evidence Graph**. This graph links specific text snippets from sources to the claims they support (or contradict).
-3.  **Self-Correction**: A **Reflexion Loop** monitors progress. If the gathered information is insufficient or contradictory, the agent dynamically **re-plans**, adding new tasks to fill gaps.
+### Core Capabilities
+1. **Hierarchical Planning**: Breaks complex research goals into dynamic task graphs with parallel execution
+2. **Evidence-Based Research**: Every claim is backed by verified sources with full provenance tracking
+3. **Production Architecture Generation**: Automatically generates constraint-aware, 12-section architecture plans including:
+   - System diagrams (Mermaid)
+   - Technology stack recommendations
+   - Cost models and optimization strategies
+   - Risk mitigation plans
+   - Cloud-specific deployment runbooks (GCP/AWS/Azure)
+4. **Self-Correction**: Reflexion loops monitor quality and dynamically re-plan when gaps are detected
 
 ---
 
 ## Key Features
 
-- **Hierarchical Task Graph** - Dynamic planning with dependency management and parallel execution.
-- **Evidence Graph** - Traceable claim provenance linking every sentence to its source.
-- **Persistent Memory** - Long-term storage using Supabase (pgvector) and semantic recall via Mem0.
-- **Source Validation** - "LLM-as-a-Judge" evaluates credibility, domain authority, and bias.
-- **Reflexion & Re-planning** - Autonomous quality control that modifies the plan at runtime.
-- **Multi-Hop Retrieval** - Recursively follows citations to find primary sources.
-- **Adaptive Model Routing** - Routes simple tasks to faster models and complex reasoning to stronger models.
+- **🔬 Hierarchical Research** - Dynamic task graphs with dependency management and parallel execution
+- **📊 Evidence Graph** - Traceable claim provenance linking every statement to source documents
+- **🏗️ Architecture Generator** - Constraint-aware production architecture plans with cost/risk analysis
+- **☁️ Cloud Deployment** - Platform-specific runbooks for GCP, AWS, and Azure
+- **💾 Persistent Memory** - Session management with Supabase and semantic storage via Qdrant
+- **✅ Source Validation** - LLM-based evaluation of credibility, domain authority, and bias
+- **🔄 Reflexion & Re-planning** - Autonomous quality control with runtime plan modification
+- **🔗 Multi-Hop Retrieval** - Recursive citation following to find primary sources
+- **⚡ Adaptive Routing** - Fast models for simple tasks, powerful models for complex reasoning
+- **🎨 Modern UI** - Next.js interface with WebGL backgrounds and real-time updates
 
 ---
 
@@ -56,50 +57,53 @@ The **Deep Research Agent** is an autonomous system designed to emulate a human 
 
 ```mermaid
 flowchart TB
-    User[User / UI] --> |"Query"| HPA[Hierarchical Planner]
+    User[User / Next.js UI] --> |"Query + Constraints"| API[FastAPI Server]
 
-    subgraph Memory["Memory & Storage"]
-        Supabase[(Supabase PG)]
-        Mem0[Mem0 Semantic]
+    subgraph Storage["Storage Layer"]
+        Supabase[(Supabase PostgreSQL)]
+        Qdrant[(Qdrant Vector DB)]
     end
 
-    subgraph Planning["Pre-Computation Phase"]
+    subgraph Planning["Planning Engine"]
+        API --> HPA[Hierarchical Planner]
         HPA --> |"Decompose"| TG[Task Graph]
     end
 
-    subgraph Execution["Runtime Execution Engine"]
+    subgraph Execution["Research Execution"]
         TG --> |"Dispatch"| Executor[Task Executor]
         
         Executor --> |"Parallel"| Agents
         
         subgraph Agents["Agent Swarm"]
-            WSA[Web Search]
-            ASA[Academic Search]
-            TSA[Technical Search]
-            CC[Citation Crawler]
+            WSA[Web Search<br/>Exa/Tavily]
+            CC[Citation Crawler<br/>Firecrawl]
+            CE[Claim Extractor]
+            Val[Source Validator]
         end
     end
 
-    subgraph Analysis["Analysis & Synthesis"]
-        Agents --> |"Raw Data"| Val[Source Validator]
-        Val --> |"Validated"| CE[Claim Extractor]
-        CE --> |"Claims"| EG[Evidence Graph]
+    subgraph Analysis["Synthesis & Architecture"]
+        Agents --> |"Evidence"| EG[Evidence Graph]
+        EG --> |"Validated Claims"| Syn[Research Synthesizer]
         
-        EG --> |"Provneance"| Ref[Reflexion Agent]
-        Ref --> |"Critique"| HPA
+        Syn --> |"Research Report"| AG[Architecture Generator]
+        AG --> |"12-Section Plan"| RG[Runbook Generator]
         
-        EG --> |"Final Graph"| Syn[Synthesizer]
+        EG --> |"Quality Check"| Ref[Reflexion Agent]
+        Ref --> |"Re-plan if needed"| HPA
     end
 
-    Syn --> |"Report + Json"| User
+    AG --> |"Architecture JSON"| API
+    RG --> |"Cloud Deployment MD"| API
+    API --> |"Results + Citations"| User
     
-    %% Connections to Memory
-    HPA & Agents & CE -.-> Memory
+    %% Storage connections
+    HPA & Agents & CE -.-> Storage
 
     style HPA fill:#6366f1,stroke:#4338ca,color:#fff
-    style TG fill:#8b5cf6,stroke:#7c3aed,color:#fff
-    style EG fill:#10b981,stroke:#059669,color:#fff
-    style Memory fill:#f59e0b,stroke:#d97706,color:#fff
+    style AG fill:#10b981,stroke:#059669,color:#fff
+    style EG fill:#f59e0b,stroke:#d97706,color:#fff
+    style Storage fill:#3b82f6,stroke:#2563eb,color:#fff
 ```
 
 ---
@@ -109,26 +113,54 @@ flowchart TB
 ```
 Deep-Research-Agent/
 ├── src/
-│   ├── planning/            # Task Graph & Execution Engine
+│   ├── agents/                      # Specialized Agents
+│   │   ├── master_planner.py
 │   │   ├── hierarchical_planner.py
+│   │   ├── claim_extractor.py
+│   │   ├── source_validator.py
+│   │   ├── web_search.py
+│   │   └── reflexion.py
+│   ├── architecture_generator.py    # Production Architecture Generator
+│   ├── architecture_integration.py  # Architecture Service Layer
+│   ├── planning/                    # Task Graph & Execution
 │   │   ├── task_graph.py
 │   │   └── executor.py
-│   ├── evidence/            # Evidence Graph Logic
+│   ├── evidence/                    # Evidence Graph Logic
 │   │   └── graph.py
-│   ├── memory/              # Persistence Layer
+│   ├── memory/                      # Memory & Persistence
 │   │   ├── memory_api.py
+│   │   └── models.py
+│   ├── storage/                     # Supabase Integration
 │   │   └── supabase_store.py
-│   ├── agents/              # Specialized Agents
-│   │   ├── master_planner.py
-│   │   ├── source_validator.py
-│   │   ├── claiming_extractor.py
-│   │   └── ...
-│   └── core/                # Core Infrastructure
-│       └── llm_client.py    # Adaptive Model Router
-├── prompts/                 # System Prompts (.md)
-├── kestra/                  # Orchestration Workflows
-├── main.py                  # V2 Orchestrator Entrypoint
-└── server.py                # REST API Server
+│   ├── privacy/                     # PII Protection
+│   │   └── pii_scrubber.py
+│   ├── tools/                       # Search Tools (Exa, Tavily)
+│   │   └── search_tools.py
+│   └── core/                        # Core Infrastructure
+│       ├── llm_client.py
+│       └── context_manager.py
+├── frontend/                        # Next.js 14 Application
+│   ├── app/
+│   │   ├── page.tsx                # Homepage
+│   │   └── research/
+│   │       └── page.tsx            # Research Interface
+│   ├── components/
+│   │   ├── architecture-plan.tsx   # Architecture Display
+│   │   ├── research-plan.tsx       # Research Plan UI
+│   │   ├── source-card.tsx
+│   │   ├── markdown.tsx
+│   │   └── ui/                     # shadcn/ui Components
+│   └── public/
+├── prompts/                         # System Prompts
+│   ├── hierarchical_planner_prompt.md
+│   ├── claim_extraction_prompt.md
+│   ├── source_validator_prompt.txt
+│   └── ...
+├── supabase/                        # Database Migrations
+│   └── migrations/
+├── tests/                           # Test Suite
+├── main.py                          # CLI Orchestrator
+└── server.py                        # FastAPI Server
 ```
 
 ---
@@ -137,53 +169,236 @@ Deep-Research-Agent/
 
 ### Prerequisites
 - Python 3.11+
-- [Supabase](https://supabase.com) Account (for memory)
-- API Keys: Google Gemini (recommended), or Together AI / OpenRouter
+- Node.js 18+ (for frontend)
+- [Supabase](https://supabase.com) Account (for session storage)
+- [Qdrant Cloud](https://cloud.qdrant.io) Account (for semantic memory)
+- API Keys:
+  - [Cerebras](https://cerebras.ai) (for LLM inference)
+  - [Exa](https://exa.ai) or [Tavily](https://tavily.com) (for web search)
+  - [Firecrawl](https://firecrawl.dev) (for web scraping)
 
-### Installation
+### Backend Setup
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/Deep-Research-Agent.git
-   cd Deep-Research-Agent
+   git clone https://github.com/Chirag-agg/Research_Agent.git
+   cd Research_Agent
    ```
 
-2. **Install dependencies**
+2. **Install Python dependencies**
    ```bash
    pip install -r requirements.txt
    ```
 
 3. **Configure Environment**
-   ```bash
-   cp .env.example .env
-   ```
-   Edit `.env` with your keys:
+   Create a `.env` file with your API keys:
    ```ini
-   GEMINI_API_KEY=your_key_here
-   SUPABASE_URL=your_url
-   SUPABASE_KEY=your_key
+   # LLM Configuration
+   CEREBRAS_API_KEY=your_cerebras_key
+   DEFAULT_MODEL=meta-llama/Llama-3.1-70B-Instruct-Turbo
+   FAST_MODEL=meta-llama/Llama-3.1-8B-Instruct-Turbo
+
+   # Search APIs
+   EXA_API_KEY=your_exa_key
+   TAVILY_API_KEY=your_tavily_key
+   FIRECRAWL_API_KEY=your_firecrawl_key
+
+   # Storage
+   SUPABASE_URL=your_supabase_url
+   SUPABASE_KEY=your_supabase_key
+
+   # Vector DB
+   QDRANT_URL=your_qdrant_cluster_url
+   QDRANT_API_KEY=your_qdrant_api_key
    ```
 
-### Running the Agent
+4. **Set up Supabase**
+   ```bash
+   # Install Supabase CLI (if not already installed)
+   scoop install supabase  # Windows
+   # or brew install supabase/tap/supabase  # macOS
 
-**Option 1: CLI Mode**
-```bash
-python main.py
-```
-This runs a sample research query defined in `main.py`.
+   # Link your project
+   supabase link --project-ref your_project_ref
 
-**Option 2: API Server**
-```bash
-python server.py
-```
-Starts a REST API at `http://localhost:8000`.
+   # Push migrations
+   supabase db push
+   ```
+
+### Frontend Setup
+
+1. **Navigate to frontend directory**
+   ```bash
+   cd frontend
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   # or pnpm install
+   ```
+
+3. **Start development server**
+   ```bash
+   npm run dev
+   ```
+
+### Running the Application
+
+1. **Start the backend API**
+   ```bash
+   python server.py
+   ```
+   Server runs at `http://localhost:8000`
+
+2. **Start the frontend** (in a separate terminal)
+   ```bash
+   cd frontend
+   npm run dev
+   ```
+   UI available at `http://localhost:3000`
+
+3. **Submit a research query**
+   - Navigate to `http://localhost:3000/research`
+   - Enter your research question
+   - Configure architecture constraints (DAU, latency, budget, compliance)
+   - Click "Start Research" and wait for results
+   - Generate production architecture plan from the research findings
+
+---
+
+## API Endpoints
+
+### Research
+- `POST /api/research` - Submit a research query
+- `GET /api/session/{session_id}` - Get session details
+- `GET /api/history` - List research history
+
+### Architecture Generation
+- `POST /api/generate-architecture` - Generate production architecture plan
+  ```json
+  {
+    "system_name": "E-commerce Platform",
+    "recommended_solution": "Microservices with event-driven architecture...",
+    "constraints": {
+      "daily_active_users": 100000,
+      "peak_rps": 500,
+      "latency_target_ms": 200,
+      "budget_min_monthly": 5000,
+      "budget_max_monthly": 15000,
+      "compliance": ["PCI-DSS", "SOC2"]
+    }
+  }
+  ```
+
+- `POST /api/generate-deployment-runbook` - Generate cloud-specific deployment guide
+  - Supports GCP, AWS, and Azure
+  - Returns markdown with step-by-step instructions
+
+### Memory
+- `POST /api/memory/add` - Store memory/context
+- `POST /api/memory/search` - Semantic search across memories
+
+---
+
+## Architecture Generator Output
+
+The system generates comprehensive 12-section architecture plans:
+
+1. **Executive Summary** - High-level overview and recommendations
+2. **System Diagram** - Mermaid architecture diagram
+3. **Components** - Detailed component breakdown with responsibilities
+4. **Technology Stack** - Concrete tooling recommendations with alternatives
+5. **Deployment Architecture** - Multi-environment setup (dev/staging/prod)
+6. **Scalability Strategy** - Horizontal/vertical scaling approaches
+7. **Observability Plan** - Monitoring, logging, and tracing setup
+8. **Security & Compliance** - Controls mapping and security measures
+9. **Cost Model** - Detailed cost breakdown with optimization strategies
+10. **Risk Mitigation** - Identified risks with probability, impact, and RTO
+11. **Future Evolution** - Roadmap for scaling and feature expansion
+12. **Metadata** - Constraints, timestamp, and version info
 
 ---
 
 ## Deployment
 
-- **Backend**: Deploy as a Docker container on specialized GPU clouds or standard PaaS (Railway, Render).
-- **Frontend**: Next.js application deployable on Vercel.
-- **Database**: Managed Supabase instance.
+### Production Deployment
+
+**Backend (FastAPI + Python)**
+- Deploy on Railway, Render, or Fly.io
+- Environment variables configured via platform dashboard
+- Recommended: 2GB RAM, 1 vCPU minimum
+
+**Frontend (Next.js)**
+- Deploy on Vercel (recommended) or Netlify
+- Automatic deployments from GitHub
+- Environment variable: `NEXT_PUBLIC_API_URL`
+
+**Database**
+- Managed Supabase instance (included in free tier)
+- Vector storage via Qdrant Cloud
+
+### Docker Deployment
+```bash
+# Build and run with docker-compose
+docker-compose up -d
+```
+
+---
+
+## Technology Stack
+
+- **Backend**: FastAPI, Python 3.11+
+- **Frontend**: Next.js 14, React 18, TypeScript, Tailwind CSS
+- **LLM**: Cerebras (Llama 3.1 70B/8B models)
+- **Search**: Exa API, Tavily API
+- **Web Scraping**: Firecrawl
+- **Storage**: Supabase (PostgreSQL with pgvector)
+- **Vector DB**: Qdrant Cloud
+- **UI Components**: shadcn/ui, Radix UI
+- **Animations**: OGL WebGL renderer
+
+---
+
+## Documentation
+
+- [Architecture Integration Guide](ARCHITECTURE_INTEGRATION_GUIDE.md) - Complete API reference for architecture generation
+- [Implementation Summary](IMPLEMENTATION_SUMMARY.md) - Quick reference guide
+- [Architecture Generator Docs](src/ARCHITECTURE_GENERATOR.md) - Technical deep-dive
+
+---
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+---
+
+## License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## Acknowledgments
+
+- Powered by [Cerebras](https://cerebras.ai) inference
+- Search capabilities by [Exa](https://exa.ai) and [Tavily](https://tavily.com)
+- Storage by [Supabase](https://supabase.com)
+- Vector search by [Qdrant](https://qdrant.tech)
+
+---
+
+<div align="center">
+
+**Built by [Chirag Aggarwal](https://github.com/Chirag-agg)**
+
+</div>
 
 
