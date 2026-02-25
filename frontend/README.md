@@ -1,33 +1,93 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Deep Research Agent - Frontend
+
+Next.js 14 frontend for the Deep Research Agent with production architecture generation capabilities.
+
+## Features
+
+- 🔍 Interactive research interface
+- 🏗️ Architecture plan visualization
+- 📊 Evidence graph display
+- 🎨 Modern UI with WebGL backgrounds
+- 📱 Responsive design
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+
+- pnpm (recommended) or npm
+
+### Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+# Install dependencies
+pnpm install
+
+# Run development server
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to view the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create a `.env.local` file:
 
-## Learn More
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Project Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `app/` - Next.js 14 App Router pages
+  - `page.tsx` - Homepage
+  - `research/page.tsx` - Research interface
+- `components/` - React components
+  - `architecture-plan.tsx` - Architecture display
+  - `research-plan.tsx` - Research plan UI
+  - `ui/` - shadcn/ui components
+- `lib/` - Utility functions
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Tech Stack
+
+- **Framework**: Next.js 14 with App Router
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **UI Components**: shadcn/ui (Radix UI)
+- **Animations**: OGL WebGL renderer
+- **Markdown**: react-markdown with remark-gfm
+
+## Development
+
+```bash
+# Development server
+pnpm dev
+
+# Build for production
+pnpm build
+
+# Start production server
+pnpm start
+
+# Lint
+pnpm lint
+```
+
+## Deployment
+
+Deploy on Vercel with one click:
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new)
+
+Or deploy manually:
+```bash
+pnpm build
+pnpm start
+```
+
+---
+
+Built with ❤️ using Next.js and React
 
 ## Deploy on Vercel
 
