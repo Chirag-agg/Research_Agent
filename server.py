@@ -11,7 +11,11 @@ from main import DeepResearchOrchestratorV2, ResearchResultV2
 from src.storage.supabase_store import SupabaseStorage
 from src.memory.models import Session
 
-app = FastAPI(title="Deep Research Agent API")
+app = FastAPI(
+    title="Deep Research Agent API",
+    description="Autonomous research and architecture generation system",
+    version="1.0.0"
+)
 
 # Enable CORS for frontend
 app.add_middleware(
@@ -21,6 +25,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for deployment monitoring."""
+    return {
+        "status": "healthy",
+        "service": "deep-research-agent",
+        "timestamp": datetime.now().isoformat(),
+        "storage": "connected" if storage else "disconnected"
+    }
 
 # In-memory storage for active sessions (logs, streaming status)
 # Completed sessions are persisted to Supabase
