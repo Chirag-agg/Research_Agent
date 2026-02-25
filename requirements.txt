@@ -6,13 +6,12 @@ pydantic>=2.0.0
 requests>=2.31.0
 
 # LLM & AI
-# together>=1.0.0
-google-generativeai>=0.8.0
+cerebras-cloud-sdk>=1.0.0
 openai>=1.0.0
 
 # Search & Scraping
-# exa-py>=1.0.0  # Uncomment when API key available
-# firecrawl-py>=0.1.0  # Uncomment when API key available
+exa-py>=1.0.0
+firecrawl-py>=0.1.0
 
 # Data Processing
 PyPDF2>=3.0.0
@@ -37,8 +36,11 @@ openai>=1.0.0
 
 # V2 Storage & Memory
 supabase>=2.0.0
-mem0ai>=0.1.0
+qdrant-client>=1.7.0
 
 # V2 Async Support
 aiohttp>=3.9.0
+
+# Web Scraping
+tavily-python>=0.3.0
 
