@@ -28,7 +28,7 @@ const NAV_SECTIONS = [
     {
         title: "MEMORY & STORAGE",
         items: [
-            { label: "Supabase Integration", href: "/docs#supabase" },
+            { label: "Firebase Firestore", href: "/docs#firestore" },
             { label: "Qdrant Vector Store", href: "/docs#qdrant" },
             { label: "Persistent Memory", href: "/docs#persistent-memory" },
         ],

@@ -106,7 +106,7 @@ export default function DocsPage() {
                     <div className="rounded-2xl border border-slate-800/60 bg-slate-900/40 p-5">
                         <h3 className="text-lg font-semibold text-white">Memory</h3>
                         <p className="mt-2 text-sm text-slate-300">
-                            Supabase stores sessions, sources, claims, and snapshots, while Qdrant holds semantic vectors.
+                            Firebase Firestore stores sessions and results, while Qdrant holds semantic vectors.
                         </p>
                     </div>
                 </div>
@@ -261,16 +261,16 @@ export default function DocsPage() {
                 </div>
             </section>
 
-            <section id="supabase" className="space-y-6">
+            <section id="firestore" className="space-y-6">
                 <div>
-                    <h2 className="text-2xl font-semibold text-white">Supabase integration</h2>
-                    <p className="text-sm text-slate-400">SupabaseStorage persists sessions, sources, claims, and edges.</p>
+                    <h2 className="text-2xl font-semibold text-white">Firebase Firestore</h2>
+                    <p className="text-sm text-slate-400">FirestoreStore persists sessions, results, and metrics.</p>
                 </div>
                 <div className="rounded-2xl border border-slate-800/60 bg-slate-900/40 p-5 text-sm text-slate-300">
                     <ul className="space-y-2">
-                        <li>Sessions include query_text, iterations, metadata JSONB</li>
-                        <li>Sources and claims are stored with embeddings and reliability scores</li>
-                        <li>Evidence edges link claims to sources</li>
+                        <li>Sessions include query, mode, status, and timestamps</li>
+                        <li>Results stored with report text, evidence summary, and task graph</li>
+                        <li>Metrics track latency, token usage, and model info</li>
                     </ul>
                 </div>
             </section>
@@ -297,7 +297,7 @@ export default function DocsPage() {
                 <div className="rounded-2xl border border-slate-800/60 bg-slate-900/40 p-5 text-sm text-slate-300">
                     <ul className="space-y-2">
                         <li>SummarySnapshot stores compressed_text, embeddings, and claim IDs</li>
-                        <li>MemoryAPI coordinates Supabase + Qdrant with in-memory fallbacks</li>
+                        <li>MemoryAPI coordinates Firebase Firestore + Qdrant with in-memory fallbacks</li>
                     </ul>
                 </div>
             </section>
@@ -356,8 +356,8 @@ export default function DocsPage() {
                     <div className="rounded-2xl border border-slate-800/60 bg-slate-900/40 p-5 text-sm text-slate-300">
                         <p className="text-xs uppercase tracking-widest text-slate-400">Storage</p>
                         <ul className="mt-3 space-y-2">
-                            <li>SUPABASE_URL</li>
-                            <li>SUPABASE_KEY</li>
+                            <li>FIREBASE_CREDENTIALS_PATH</li>
+                            <li>FIREBASE_AUTH_ENABLED (optional)</li>
                             <li>QDRANT_URL (optional)</li>
                             <li>QDRANT_API_KEY (optional)</li>
                             <li>EMBEDDING_DIM (optional)</li>
