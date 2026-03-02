@@ -3,7 +3,7 @@ Deep Research Agent V2 - Main Orchestrator
 
 The V2 orchestrator integrates:
 - Hierarchical planning with task graphs
-- Memory persistence via Supabase + Mem0
+- Memory persistence via Firebase Firestore + Qdrant
 - Evidence graph for claim traceability
 - Parallel task execution
 
@@ -62,7 +62,7 @@ class DeepResearchOrchestratorV2:
     
     Key improvements over V1:
     - Hierarchical task planning with dynamic replanning
-    - Memory persistence via Supabase + Mem0  
+    - Memory persistence via Firebase Firestore + Qdrant  
     - Evidence graph for claim-source relationships
     - Parallel task execution with budget management
     """
@@ -104,9 +104,6 @@ class DeepResearchOrchestratorV2:
                 print(f"⚠️ Warning: Could not initialize Memory API: {e}")
                 print("Continuing without memory persistence...")
                 self.memory_api = None
-                self.log("Memory API initialized")
-            except Exception as e:
-                self.log(f"Memory API not available: {e}")
         
         # Initialize evidence graph
         self.evidence_graph = EvidenceGraph()
@@ -239,7 +236,11 @@ class DeepResearchOrchestratorV2:
             prefs.setdefault("min_sources", 3)
             prefs.setdefault("top_k", 3)
             # Temporarily bias model tiers toward fast model
-            fast_model = self.llm_client.MODELS.get("fast", self.llm_client.MODELS.get("default"))
+            fast_model = (
+                self.llm_client.MODELS.get("fast")
+                or self.llm_client.MODELS.get("default")
+                or "gemma-3-27b-it"
+            )
             _orig_tiers = {k: list(v) for k, v in self.llm_client.MODEL_TIERS.items()}
             self.llm_client.MODEL_TIERS = {
                 "small": [fast_model],
@@ -272,15 +273,17 @@ class DeepResearchOrchestratorV2:
             if previous_context:
                 prior_messages = previous_context.get("messages", [])
                 prior_summary = previous_context.get("summary")
-                if previous_context.get("evidence_graph"):
+                evidence_graph_data = previous_context.get("evidence_graph")
+                if isinstance(evidence_graph_data, dict):
                     try:
-                        prior_graph = EvidenceGraph.from_dict(previous_context.get("evidence_graph"))
+                        prior_graph = EvidenceGraph.from_dict(evidence_graph_data)
                         self.evidence_graph = prior_graph
                     except Exception as e:
                         self.log(f"Failed to load prior evidence graph: {e}")
-                if previous_context.get("task_graph"):
+                task_graph_data = previous_context.get("task_graph")
+                if isinstance(task_graph_data, dict):
                     try:
-                        prior_task_graph = TaskGraph.from_dict(previous_context.get("task_graph"))
+                        prior_task_graph = TaskGraph.from_dict(task_graph_data)
                     except Exception as e:
                         self.log(f"Failed to load prior task graph: {e}")
 
@@ -445,12 +448,13 @@ class DeepResearchOrchestratorV2:
         
         # Add claims and edges
         for claim_data in claims:
-            claim = Claim(
-                text=claim_data.get("claim", claim_data.get("text", "")),
-                normalized_text=claim_data.get("normalized_text", ""),
-                confidence=claim_data.get("confidence", 0.5),
-                supporting_text=claim_data.get("supporting_text", ""),
-            )
+            claim_payload = {
+                "text": claim_data.get("claim", claim_data.get("text", "")),
+                "normalized_text": claim_data.get("normalized_text", ""),
+                "confidence": claim_data.get("confidence", 0.5),
+                "supporting_text": claim_data.get("supporting_text", ""),
+            }
+            claim = Claim.from_dict(claim_payload)
             self.evidence_graph.add_claim(claim)
             
             # Create edge to source
@@ -579,7 +583,7 @@ def main():
         search_provider="exa",
         max_iterations=3,
         verbose=True,
-        use_memory=False,  # Set to True when Mem0/Supabase configured
+        use_memory=False,  # Set to True when Firebase Firestore configured
     )
     
     query = "What are the latest advancements in AI agent architectures in 2024?"

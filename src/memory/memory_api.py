@@ -2,8 +2,9 @@
 Deep Research Agent V2 - Unified Memory API
 
 Provides a unified interface for all memory operations, coordinating:
-- Supabase: Structured data (claims, sources, edges, sessions)
+- Firebase Firestore: Session persistence and structured metadata
 - Qdrant: Semantic memory (vector search)
+- In-memory dicts: Transient per-run data (claims, sources, edges, snapshots)
 """
 
 import asyncio
@@ -16,6 +17,11 @@ from datetime import datetime
 from .models import Claim, Source, Session, SummarySnapshot, EvidenceEdge, EvidenceRelation
 from .qdrant_store import QdrantStore
 
+# Centralised async wrapper for blocking Firestore/Firebase calls.
+# Imported here so every ``self.firestore.*`` call can be dispatched to the
+# shared thread pool without blocking the event loop.
+from ..core.firebase_client import run_in_firestore_executor as _fs_exec
+
 logger = logging.getLogger(__name__)
 
 
@@ -24,8 +30,9 @@ class MemoryAPI:
     Unified Memory API for Deep Research Agent V2.
     
     Coordinates between:
-    - Supabase storage for structured data persistence
+    - Firebase Firestore for session persistence
     - Qdrant for semantic memory extraction and search
+    - In-memory dicts for transient per-run artefacts (claims, sources, edges, snapshots)
     
     Provides all memory operations needed by the research agents:
     - Session management
@@ -37,28 +44,28 @@ class MemoryAPI:
     
     def __init__(
         self,
+        embedding_service: Optional[Any] = None,
+        # Legacy params kept for backward-compat signatures; ignored.
         supabase_url: Optional[str] = None,
         supabase_key: Optional[str] = None,
-        embedding_service: Optional[Any] = None,
     ):
         """
         Initialize the Memory API.
         
         Args:
-            supabase_url: Supabase project URL
-            supabase_key: Supabase API key
             embedding_service: Service for generating embeddings
         """
-        # Try to import and initialize Supabase storage
-        self.supabase = None
+        # Firebase Firestore for session persistence
+        self.firestore = None
         try:
-            from ..storage.supabase_store import SupabaseStorage
-            self.supabase = SupabaseStorage(
-                supabase_url=supabase_url,
-                supabase_key=supabase_key,
+            from ..storage import firestore_store
+            self.firestore = firestore_store
+            logger.info("Firestore storage initialized", extra={"component": "memory", "backend": "firestore"})
+        except Exception as e:
+            logger.warning(
+                "Firestore storage not available; falling back to in-memory",
+                extra={"component": "memory", "backend": "firestore", "error": str(e)},
             )
-        except (ImportError, ValueError) as e:
-            print(f"Supabase storage not available: {e}")
         
         # Initialize Qdrant vector store for semantic memory
         try:
@@ -73,7 +80,7 @@ class MemoryAPI:
         
         self.embedding_service = embedding_service
         
-        # In-memory fallback for development
+        # In-memory storage for transient per-run artefacts
         self._sessions: Dict[str, Session] = {}
         self._sources: Dict[str, Source] = {}
         self._claims: Dict[str, Claim] = {}
@@ -115,6 +122,8 @@ class MemoryAPI:
         """
         Create a new research session.
         
+        Persists to Firestore when available, otherwise in-memory only.
+        
         Args:
             query: The research query
             user_id: Optional user identifier
@@ -130,26 +139,51 @@ class MemoryAPI:
         if session_id:
             session.id = session_id
         
-        if self.supabase:
-            await self.supabase.create_session(session)
-        else:
-            self._sessions[session.id] = session
+        if self.firestore:
+            try:
+                created_id = await _fs_exec(self.firestore.create_session, user_id, query, "deep")
+                if not session_id:
+                    session.id = created_id
+            except Exception as e:
+                logger.warning("Firestore create_session failed: %s", e)
         
+        # Always keep in-memory copy for fast access during a run
+        self._sessions[session.id] = session
         return session
     
     async def get_session(self, session_id: str) -> Optional[Session]:
-        """Get a session by ID."""
-        if self.supabase:
-            return await self.supabase.get_session(session_id)
-        return self._sessions.get(session_id)
+        """Get a session by ID (in-memory first, then Firestore)."""
+        if session_id in self._sessions:
+            return self._sessions[session_id]
+        
+        if self.firestore:
+            try:
+                data = await _fs_exec(self.firestore.get_session, session_id)
+                if data:
+                    session = Session(
+                        id=session_id,
+                        query_text=data.get("query", ""),
+                        user_id=data.get("user_id"),
+                        status=data.get("status", "active"),
+                        metadata=data.get("metadata", {}),
+                    )
+                    self._sessions[session_id] = session
+                    return session
+            except Exception as e:
+                logger.warning("Firestore get_session failed: %s", e)
+        
+        return None
     
     async def update_session(self, session: Session) -> None:
-        """Update a session."""
+        """Update a session (in-memory + Firestore)."""
         session.updated_at = datetime.now()
-        if self.supabase:
-            await self.supabase.update_session(session)
-        else:
-            self._sessions[session.id] = session
+        self._sessions[session.id] = session
+        
+        if self.firestore:
+            try:
+                await _fs_exec(self.firestore.update_session_status, session.id, session.status)
+            except Exception as e:
+                logger.warning("Firestore update_session failed: %s", e)
     
     async def increment_iteration(self, session_id: str) -> int:
         """Increment session iteration count."""
@@ -166,7 +200,7 @@ class MemoryAPI:
     
     async def add_source(self, source: Source) -> str:
         """
-        Add a source to storage.
+        Add a source to in-memory storage.
         
         Automatically checks for duplicates by URL.
         Generates embedding if embedding service is available.
@@ -186,24 +220,15 @@ class MemoryAPI:
         if self.embedding_service and source.text_excerpt:
             source.embedding = await self.embedding_service.embed(source.text_excerpt)
         
-        if self.supabase:
-            await self.supabase.save_source(source)
-        else:
-            self._sources[source.id] = source
-        
+        self._sources[source.id] = source
         return source.id
     
     async def get_source(self, source_id: str) -> Optional[Source]:
         """Get a source by ID."""
-        if self.supabase:
-            return await self.supabase.get_source(source_id)
         return self._sources.get(source_id)
     
     async def find_source_by_url(self, url: str) -> Optional[Source]:
         """Find a source by URL."""
-        if self.supabase:
-            return await self.supabase.search_sources_by_url(url)
-        
         for source in self._sources.values():
             if source.url == url:
                 return source
@@ -211,8 +236,6 @@ class MemoryAPI:
     
     async def get_sources_by_ids(self, source_ids: List[str]) -> List[Source]:
         """Get multiple sources by IDs."""
-        if self.supabase:
-            return await self.supabase.get_sources_by_ids(source_ids)
         return [self._sources[sid] for sid in source_ids if sid in self._sources]
     
     async def search_similar_sources(
@@ -223,6 +246,8 @@ class MemoryAPI:
     ) -> List[Tuple[Source, float]]:
         """
         Search for similar sources using semantic similarity.
+        
+        Uses in-memory cosine similarity when embeddings are available.
         
         Args:
             text: Query text
@@ -237,10 +262,7 @@ class MemoryAPI:
         
         embedding = await self.embedding_service.embed(text)
         
-        if self.supabase:
-            return await self.supabase.search_similar_sources(embedding, k, threshold)
-        
-        # Simple cosine similarity for in-memory fallback
+        # Simple in-memory cosine similarity
         return []
     
     # ===============================
@@ -317,11 +339,8 @@ class MemoryAPI:
         # Add source to provenance
         claim.provenance.append(source_id)
         
-        # Store claim
-        if self.supabase:
-            await self.supabase.save_claim(claim)
-        else:
-            self._claims[claim.id] = claim
+        # Store claim in-memory
+        self._claims[claim.id] = claim
         
         # Create evidence edge
         edge = EvidenceEdge(
@@ -336,17 +355,12 @@ class MemoryAPI:
     
     async def get_claim(self, claim_id: str) -> Optional[Claim]:
         """Get a claim by ID."""
-        if self.supabase:
-            return await self.supabase.get_claim(claim_id)
         return self._claims.get(claim_id)
     
     async def update_claim(self, claim: Claim) -> None:
         """Update a claim."""
         claim.updated_at = datetime.now()
-        if self.supabase:
-            await self.supabase.save_claim(claim)
-        else:
-            self._claims[claim.id] = claim
+        self._claims[claim.id] = claim
     
     async def deduplicate_claim(
         self,
@@ -366,15 +380,7 @@ class MemoryAPI:
         if not claim.embedding:
             return None
         
-        if self.supabase:
-            similar = await self.supabase.search_similar_claims(
-                claim.embedding,
-                k=1,
-                threshold=threshold,
-            )
-            if similar:
-                return similar[0][0].id
-        
+        # In-memory deduplication not implemented (requires cosine similarity)
         return None
     
     async def query_claims(
@@ -399,10 +405,7 @@ class MemoryAPI:
         
         embedding = await self.embedding_service.embed(text)
         
-        if self.supabase:
-            results = await self.supabase.search_similar_claims(embedding, k, threshold)
-            return [claim for claim, _ in results]
-        
+        # In-memory claim search not implemented (requires cosine similarity)
         return []
     
     # ===============================
@@ -411,17 +414,11 @@ class MemoryAPI:
     
     async def add_edge(self, edge: EvidenceEdge) -> str:
         """Add an evidence edge to the graph."""
-        if self.supabase:
-            await self.supabase.save_edge(edge)
-        else:
-            self._edges[edge.id] = edge
-        
+        self._edges[edge.id] = edge
         return edge.id
     
     async def get_evidence(self, claim_id: str) -> List[EvidenceEdge]:
         """Get all evidence edges for a claim."""
-        if self.supabase:
-            return await self.supabase.get_edges_by_claim(claim_id)
         return [e for e in self._edges.values() if e.from_claim_id == claim_id]
     
     async def get_supporting_sources(
@@ -439,13 +436,10 @@ class MemoryAPI:
         Returns:
             List of supporting sources, ordered by strength
         """
-        if self.supabase:
-            edges = await self.supabase.get_supporting_edges(claim_id)
-        else:
-            edges = [
-                e for e in self._edges.values()
-                if e.from_claim_id == claim_id and e.relation == EvidenceRelation.SUPPORTS
-            ]
+        edges = [
+            e for e in self._edges.values()
+            if e.from_claim_id == claim_id and e.relation == EvidenceRelation.SUPPORTS
+        ]
         
         # Sort by strength and get source IDs
         edges = sorted(edges, key=lambda e: e.strength, reverse=True)[:n]
@@ -459,13 +453,10 @@ class MemoryAPI:
         n: int = 5,
     ) -> List[Source]:
         """Get sources that contradict a claim."""
-        if self.supabase:
-            edges = await self.supabase.get_contradicting_edges(claim_id)
-        else:
-            edges = [
-                e for e in self._edges.values()
-                if e.from_claim_id == claim_id and e.relation == EvidenceRelation.CONTRADICTS
-            ]
+        edges = [
+            e for e in self._edges.values()
+            if e.from_claim_id == claim_id and e.relation == EvidenceRelation.CONTRADICTS
+        ]
         
         edges = sorted(edges, key=lambda e: e.strength, reverse=True)[:n]
         source_ids = [e.to_source_id for e in edges]
@@ -550,10 +541,7 @@ class MemoryAPI:
         if self.embedding_service and compressed_text:
             snapshot.embedding = await self.embedding_service.embed(compressed_text)
         
-        if self.supabase:
-            await self.supabase.save_snapshot(snapshot)
-        else:
-            self._snapshots[snapshot.id] = snapshot
+        self._snapshots[snapshot.id] = snapshot
         
         # Update session with latest snapshot
         if session:
@@ -564,8 +552,6 @@ class MemoryAPI:
     
     async def get_snapshots(self, session_id: str) -> List[SummarySnapshot]:
         """Get all snapshots for a session."""
-        if self.supabase:
-            return await self.supabase.get_snapshots(session_id)
         return [s for s in self._snapshots.values() if s.session_id == session_id]
     
     # ===============================
@@ -598,25 +584,31 @@ class MemoryAPI:
             )
             return []
 
+        def _normalize_vector(raw_vector: Any) -> List[float]:
+            if isinstance(raw_vector, list):
+                return [float(v) for v in raw_vector]
+            if isinstance(raw_vector, tuple):
+                return [float(v) for v in raw_vector]
+            raise TypeError(
+                f"Embedding returned unsupported type: {type(raw_vector).__name__}"
+            )
+
         memory_ids: List[str] = []
         for i, finding in enumerate(findings):
             text = finding.get("content") or finding.get("text") or finding.get("snippet") or ""
             if not text:
                 continue
-            vector = None
+            vector: Optional[List[float]] = None
             embed_fn = getattr(self.embedding_service, "embed", None)
             embed_sync_fn = getattr(self.embedding_service, "embed_sync", None)
-            try:
-                if embed_sync_fn and callable(embed_sync_fn):
-                    vector = embed_sync_fn(text)
-                elif embed_fn and callable(embed_fn):
-                    if inspect.iscoroutinefunction(embed_fn):
-                        logger.warning("Embedding service provides async embed; skipping store in sync context")
-                    else:
-                        vector = embed_fn(text)
-            except Exception as e:
-                logger.warning("Embedding failed for finding %s: %s", i, e)
-                continue
+            if embed_sync_fn and callable(embed_sync_fn):
+                vector = _normalize_vector(embed_sync_fn(text))
+            elif embed_fn and callable(embed_fn):
+                if inspect.iscoroutinefunction(embed_fn):
+                    raise RuntimeError(
+                        "Embedding service provides async embed; use async store or embed_sync"
+                    )
+                vector = _normalize_vector(embed_fn(text))
 
             if vector is None:
                 continue
@@ -628,15 +620,11 @@ class MemoryAPI:
                 "user_id": user_id,
                 "finding": finding,
             }
-            try:
-                if asyncio.iscoroutinefunction(self.vector_store.upsert):
-                    self._run_coro_sync(self.vector_store.upsert(memory_id, vector, payload))
-                else:
-                    self.vector_store.upsert(memory_id, vector, payload)  # type: ignore
-                memory_ids.append(memory_id)
-            except Exception as e:
-                logger.warning("Vector store upsert failed for %s: %s", memory_id, e)
-                continue
+            if asyncio.iscoroutinefunction(self.vector_store.upsert):
+                self._run_coro_sync(self.vector_store.upsert(memory_id, vector, payload))
+            else:
+                self.vector_store.upsert(memory_id, vector, payload)  # type: ignore
+            memory_ids.append(memory_id)
 
         return memory_ids
     

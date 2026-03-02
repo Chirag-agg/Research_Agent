@@ -334,24 +334,24 @@ class ResearchMemoryManager:
     """
     High-level memory manager for research workflows.
     
-    Coordinates between Mem0 (semantic memory) and Supabase (structured data)
+    Coordinates between Mem0 (semantic memory) and Firestore (structured data)
     to provide a unified memory interface for the research agent.
     """
     
     def __init__(
         self,
         mem0_client: Mem0Client,
-        supabase_storage: Optional[Any] = None,  # SupabaseStorage
+        firestore_storage: Optional[Any] = None,
     ):
         """
         Initialize research memory manager.
         
         Args:
             mem0_client: Mem0 client for semantic memory
-            supabase_storage: Supabase storage for structured data
+            firestore_storage: Firestore storage for structured data
         """
         self.mem0 = mem0_client
-        self.storage = supabase_storage
+        self.storage = firestore_storage
         self.agent_id = "deep-research-agent"
     
     def store_research_findings(

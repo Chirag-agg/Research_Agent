@@ -40,7 +40,7 @@ class EvidenceGraph:
         Initialize evidence graph.
         
         Args:
-            storage: Optional SupabaseStorage for persistence
+            storage: Optional storage backend for persistence
         """
         self.storage = storage
         

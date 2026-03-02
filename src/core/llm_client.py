@@ -6,18 +6,19 @@ Supports multiple models with automatic fallback and token tracking.
 """
 
 import asyncio
+import importlib
 import os
 import threading
 import time
 import requests
-from typing import Optional, List, Dict, Any, Generator, Tuple
+from typing import Optional, List, Dict, Any, Generator, Tuple, cast
 from dataclasses import dataclass, field
 from dotenv import load_dotenv
 import httpx
 
 try:
-    from together import Together
-except ImportError:
+    Together = importlib.import_module("together").Together
+except Exception:
     Together = None
 
 
@@ -205,23 +206,27 @@ class LLMClient:
     
     def _chat_openrouter(self, messages, model_name, temperature, max_tokens, system_prompt) -> LLMResponse:
         """Execute chat via OpenRouter."""
+        if self.client is None:
+            raise RuntimeError("OpenRouter client not initialized")
         if system_prompt:
-            if messages[0]['role'] != 'system':
+            if messages and messages[0]["role"] != "system":
                 messages = [{"role": "system", "content": system_prompt}] + messages
         
         try:
             response = self.client.chat.completions.create(
                 model=model_name,
-                messages=messages,
+                messages=cast(Any, messages),
                 temperature=temperature,
                 max_tokens=max_tokens,
             )
-            
-            content = response.choices[0].message.content
+            response = cast(Any, response)
+
+            content = response.choices[0].message.content or ""
+            usage_obj = getattr(response, "usage", None)
             usage = {
-                "prompt_tokens": response.usage.prompt_tokens,
-                "completion_tokens": response.usage.completion_tokens,
-                "total_tokens": response.usage.total_tokens,
+                "prompt_tokens": getattr(usage_obj, "prompt_tokens", 0),
+                "completion_tokens": getattr(usage_obj, "completion_tokens", 0),
+                "total_tokens": getattr(usage_obj, "total_tokens", 0),
             }
             self._record_usage(usage)
             
@@ -236,26 +241,30 @@ class LLMClient:
     
     def _chat_together(self, messages, model_name, temperature, max_tokens, system_prompt) -> LLMResponse:
         """Execute chat via Together AI."""
+        if self.client is None:
+            raise RuntimeError("Together client not initialized")
         if system_prompt:
-            if messages[0]['role'] != 'system':
+            if messages and messages[0]["role"] != "system":
                 messages = [{"role": "system", "content": system_prompt}] + messages
-        
+
         response = self.client.chat.completions.create(
             model=model_name,
-            messages=messages,
+            messages=cast(Any, messages),
             temperature=temperature,
             max_tokens=max_tokens,
         )
-        
+        response = cast(Any, response)
+
+        usage_obj = getattr(response, "usage", None)
         usage = {
-            "prompt_tokens": response.usage.prompt_tokens,
-            "completion_tokens": response.usage.completion_tokens,
-            "total_tokens": response.usage.total_tokens,
+            "prompt_tokens": getattr(usage_obj, "prompt_tokens", 0),
+            "completion_tokens": getattr(usage_obj, "completion_tokens", 0),
+            "total_tokens": getattr(usage_obj, "total_tokens", 0),
         }
         self._record_usage(usage)
         
         return LLMResponse(
-            content=response.choices[0].message.content,
+            content=response.choices[0].message.content or "",
             model=model_name,
             usage=usage,
             finish_reason=response.choices[0].finish_reason,
@@ -358,10 +367,11 @@ class LLMClient:
                 
         except Exception as e:
             error_msg = str(e)
-            if hasattr(e, 'response') and e.response is not None:
+            response_obj = getattr(e, "response", None)
+            if response_obj is not None:
                 try:
-                    error_msg += f". Details: {e.response.text}"
-                except:
+                    error_msg += f". Details: {response_obj.text}"
+                except Exception:
                     pass
             raise Exception(f"Gemini API Error: {error_msg}")
 
@@ -398,9 +408,12 @@ class LLMClient:
             messages = [{"role": "system", "content": system_prompt}] + messages
 
         try:
-            content, usage, finish_reason = self._run_coroutine_sync(
+            result = self._run_coroutine_sync(
                 self._cerebras_call(messages=messages, model=model_name)
             )
+            if not result:
+                raise Exception("Empty response from Cerebras call")
+            content, usage, finish_reason = result
         except Exception as e:
             raise Exception(f"Cerebras API Error: {e}")
 
@@ -560,7 +573,7 @@ class LLMClient:
             LLMResponse
         """
         # Get remaining budget for task
-        remaining = self._task_budgets.get(task_id, budget_ms)
+        remaining = self._task_budgets.get(task_id, budget_ms) if task_id else budget_ms
         
         # Route to appropriate model
         model = self.route_model(task_type, model_hint, remaining)
@@ -623,14 +636,17 @@ class LLMClient:
             if system_prompt:
                 messages = [{"role": "system", "content": system_prompt}] + messages
 
+            if self.client is None:
+                raise RuntimeError("Chat client not initialized")
             response = self.client.chat.completions.create(
                 model=model_name,
-                messages=messages,
+                messages=cast(Any, messages),
                 temperature=temperature,
                 max_tokens=max_tokens,
                 stream=True,
             )
-            
+            response = cast(Any, response)
+
             for chunk in response:
                 if chunk.choices[0].delta.content:
                     yield chunk.choices[0].delta.content

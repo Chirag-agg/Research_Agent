@@ -3,12 +3,20 @@
 from __future__ import annotations
 
 import asyncio
+import importlib
 import logging
 import os
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 
-from qdrant_client import QdrantClient
-from qdrant_client.http import models as qm
+QdrantClient: Optional[Any] = None
+qm: Optional[Any] = None
+try:
+    qdrant_module = importlib.import_module("qdrant_client")
+    QdrantClient = getattr(qdrant_module, "QdrantClient", None)
+    qm = importlib.import_module("qdrant_client.http.models")
+except Exception:
+    QdrantClient = None
+    qm = None
 
 from .vector_store import VectorStore
 
@@ -21,6 +29,13 @@ class QdrantStore(VectorStore):
     def __init__(self, collection: str = "research_memory"):
         self.collection = collection
         self.embedding_dim = int(os.getenv("EMBEDDING_DIM", "1536"))
+
+        if QdrantClient is None or qm is None:
+            raise ImportError(
+                "qdrant-client is not installed. Install it with 'pip install qdrant-client'."
+            )
+
+        self._qm = qm
 
         url = os.getenv("QDRANT_URL")
         api_key = os.getenv("QDRANT_API_KEY")
@@ -55,7 +70,10 @@ class QdrantStore(VectorStore):
         logger.info("Creating Qdrant collection '%s' (size=%s, distance=cosine)", self.collection, self.embedding_dim)
         self.client.recreate_collection(
             collection_name=self.collection,
-            vectors_config=qm.VectorParams(size=self.embedding_dim, distance=qm.Distance.COSINE),
+            vectors_config=self._qm.VectorParams(
+                size=self.embedding_dim,
+                distance=self._qm.Distance.COSINE,
+            ),
         )
 
     async def _to_thread(self, func, *args, **kwargs):
@@ -65,7 +83,7 @@ class QdrantStore(VectorStore):
         await self._to_thread(
             self.client.upsert,
             collection_name=self.collection,
-            points=[qm.PointStruct(id=id, vector=vector, payload=payload)],
+            points=[self._qm.PointStruct(id=id, vector=vector, payload=payload)],
         )
 
     async def search(self, vector: List[float], top_k: int = 5) -> List[Dict]:
@@ -98,5 +116,5 @@ class QdrantStore(VectorStore):
         await self._to_thread(
             self.client.delete,
             collection_name=self.collection,
-            points_selector=qm.PointIdsList(points=[id]),
+            points_selector=self._qm.PointIdsList(points=[id]),
         )
