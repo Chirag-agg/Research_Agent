@@ -36,6 +36,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { ArchitecturePlanDisplay } from "@/components/architecture-plan";
 
 interface LogEntry {
   timestamp: string;
@@ -53,6 +54,53 @@ interface ResearchResult {
     evidence_graph?: any;
     [key: string]: any;
   };
+}
+
+interface ArchitecturePlan {
+  metadata: {
+    system_name: string;
+    dau: number;
+    compliance_requirements: string[];
+    confidence_score?: number;
+  };
+  executive_summary: string;
+  system_diagram: {
+    format: string;
+    diagram: string;
+  };
+  components: Array<{
+    name: string;
+    purpose: string;
+    technology: string;
+    sla: Record<string, string>;
+  }>;
+  technology_stack: Array<{
+    component: string;
+    technology: string;
+    reasoning: string;
+    pros: string[];
+    cons: string[];
+    cost_monthly_usd: number;
+  }>;
+  cost_model: {
+    total_monthly_cost: {
+      total_usd: number;
+      llm_cost_usd: number;
+      infrastructure_cost_usd: number;
+    };
+  };
+  risk_mitigation: Array<{
+    risk: string;
+    probability: string;
+    impact: string;
+    mitigation: string[];
+    rto: string;
+  }>;
+  deployment_architecture: any;
+  scalability_strategy: any;
+  observability_plan: any;
+  security_compliance: any;
+  future_evolution: any;
 }
 
 interface HistoryItem {
@@ -73,6 +121,18 @@ function ResearchPageContent() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [mode, setMode] = useState<"quick" | "deep">("deep");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [architecture, setArchitecture] = useState<ArchitecturePlan | null>(null);
+  const [architectureLoading, setArchitectureLoading] = useState(false);
+  const [architectureError, setArchitectureError] = useState<string | null>(null);
+  const [showArchitectureConstraints, setShowArchitectureConstraints] = useState(false);
+  const [constraints, setConstraints] = useState({
+    dau: 10000,
+    peak_rps: 100,
+    latency_target_ms: 500,
+    budget_min_monthly: 5000,
+    budget_max_monthly: 15000,
+    compliance: ["SOC2", "GDPR"],
+  });
   const metrics = result?.metadata?.metrics as
     | {
       mode?: "quick" | "deep";
@@ -257,6 +317,83 @@ function ResearchPageContent() {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
+    }
+  };
+
+  const generateArchitecturePlan = async () => {
+    if (!result) return;
+
+    setArchitectureLoading(true);
+    setArchitectureError(null);
+
+    try {
+      const response = await fetch(`${API_URL}/api/generate-architecture`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          system_name: "Deep Research Agent",
+          system_description: query,
+          recommended_solution: result.report,
+          constraints: {
+            system_name: "Deep Research Agent",
+            daily_active_users: constraints.dau,
+            peak_concurrent_sessions: constraints.peak_rps,
+            queries_per_session: 5,
+            quick_mode_latency_sec: 30,
+            deep_mode_latency_sec: 300,
+            interactive_latency_sec: constraints.latency_target_ms / 1000, // Convert ms to seconds
+            budget_monthly_min: constraints.budget_min_monthly,
+            budget_monthly_max: constraints.budget_max_monthly,
+            compliance_requirements: constraints.compliance,
+          },
+          tradeoffs: ["Balancing cost, latency, and compliance requirements"],
+          confidence_score: 0.85,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to generate architecture: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      setArchitecture(data);
+    } catch (error) {
+      console.error("Architecture generation error:", error);
+      setArchitectureError(error instanceof Error ? error.message : "Failed to generate architecture");
+    } finally {
+      setArchitectureLoading(false);
+    }
+  };
+
+  const handleGenerateRunbook = async (cloudTarget: string) => {
+    if (!architecture) return;
+
+    try {
+      const response = await fetch(`${API_URL}/api/generate-deployment-runbook`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          architecture,
+          target_cloud: cloudTarget,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to generate runbook: ${response.statusText}`);
+      }
+
+      const runbookText = await response.text();
+      // Download as markdown file
+      const element = document.createElement("a");
+      element.setAttribute("href", "data:text/markdown;charset=utf-8," + encodeURIComponent(runbookText));
+      element.setAttribute("download", `deployment-runbook-${cloudTarget.toLowerCase()}.md`);
+      element.style.display = "none";
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
+    } catch (error) {
+      console.error("Runbook generation error:", error);
+      setArchitectureError(error instanceof Error ? error.message : "Failed to generate runbook");
     }
   };
 
@@ -647,6 +784,154 @@ function ResearchPageContent() {
                         <div className="text-2xl font-bold text-zinc-100">{result.metadata?.evidence_graph?.claims?.length || 0}</div>
                       </CardContent>
                     </Card>
+                  </div>
+
+                  {/* Architecture Plan Section */}
+                  <div className="space-y-4 mt-8 pt-8 border-t border-zinc-800">
+                    <div>
+                      <h3 className="text-lg font-semibold text-zinc-100 mb-2">Production Architecture Plan</h3>
+                      <p className="text-sm text-zinc-400 mb-4">Generate a production-ready architecture based on your research findings and system constraints.</p>
+                    </div>
+
+                    {/* Constraints Configuration */}
+                    {!architecture && (
+                      <Card className="bg-zinc-900/40 border-zinc-800">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="text-sm font-semibold text-zinc-200">System Constraints</CardTitle>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setShowArchitectureConstraints(!showArchitectureConstraints)}
+                              className="text-zinc-400 hover:text-zinc-200"
+                            >
+                              {showArchitectureConstraints ? "Hide" : "Edit"}
+                            </Button>
+                          </div>
+                        </CardHeader>
+
+                        {showArchitectureConstraints && (
+                          <CardContent className="space-y-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div>
+                                <label className="text-xs font-medium text-zinc-400 block mb-2">Daily Active Users</label>
+                                <Input
+                                  type="number"
+                                  value={constraints.dau}
+                                  onChange={(e) => setConstraints({ ...constraints, dau: Number(e.target.value) })}
+                                  className="bg-black/30 border-zinc-700 text-zinc-200"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-xs font-medium text-zinc-400 block mb-2">Peak RPS</label>
+                                <Input
+                                  type="number"
+                                  value={constraints.peak_rps}
+                                  onChange={(e) => setConstraints({ ...constraints, peak_rps: Number(e.target.value) })}
+                                  className="bg-black/30 border-zinc-700 text-zinc-200"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-xs font-medium text-zinc-400 block mb-2">Latency Target (ms)</label>
+                                <Input
+                                  type="number"
+                                  value={constraints.latency_target_ms}
+                                  onChange={(e) => setConstraints({ ...constraints, latency_target_ms: Number(e.target.value) })}
+                                  className="bg-black/30 border-zinc-700 text-zinc-200"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-xs font-medium text-zinc-400 block mb-2">Budget Range</label>
+                                <div className="flex gap-2">
+                                  <Input
+                                    type="number"
+                                    placeholder="Min"
+                                    value={constraints.budget_min_monthly}
+                                    onChange={(e) => setConstraints({ ...constraints, budget_min_monthly: Number(e.target.value) })}
+                                    className="bg-black/30 border-zinc-700 text-zinc-200"
+                                  />
+                                  <Input
+                                    type="number"
+                                    placeholder="Max"
+                                    value={constraints.budget_max_monthly}
+                                    onChange={(e) => setConstraints({ ...constraints, budget_max_monthly: Number(e.target.value) })}
+                                    className="bg-black/30 border-zinc-700 text-zinc-200"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                            <div>
+                              <label className="text-xs font-medium text-zinc-400 block mb-2">Compliance Requirements</label>
+                              <div className="flex flex-wrap gap-2">
+                                {["SOC2", "GDPR", "HIPAA", "PCI-DSS"].map((comp) => (
+                                  <label key={comp} className="flex items-center gap-2 text-sm">
+                                    <input
+                                      type="checkbox"
+                                      checked={constraints.compliance.includes(comp)}
+                                      onChange={(e) => {
+                                        if (e.target.checked) {
+                                          setConstraints({ ...constraints, compliance: [...constraints.compliance, comp] });
+                                        } else {
+                                          setConstraints({ ...constraints, compliance: constraints.compliance.filter(c => c !== comp) });
+                                        }
+                                      }}
+                                      className="rounded border-zinc-600 bg-black/30"
+                                    />
+                                    <span className="text-zinc-300">{comp}</span>
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                          </CardContent>
+                        )}
+
+                        <CardContent className="pt-0">
+                          <Button
+                            onClick={generateArchitecturePlan}
+                            disabled={architectureLoading || !result}
+                            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                          >
+                            {architectureLoading ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Generating Architecture...
+                              </>
+                            ) : (
+                              <>
+                                <Sparkles className="h-4 w-4 mr-2" />
+                                Generate Production Architecture
+                              </>
+                            )}
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* Architecture Plan Display */}
+                    {architecture && (
+                      <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                        <ArchitecturePlanDisplay
+                          architecture={architecture}
+                          loading={architectureLoading}
+                          error={architectureError}
+                          onGenerateRunbook={handleGenerateRunbook}
+                        />
+                      </div>
+                    )}
+
+                    {architectureError && !architecture && (
+                      <Card className="bg-red-900/20 border-red-800">
+                        <CardContent className="pt-6">
+                          <div className="flex gap-3">
+                            <AlertCircle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
+                            <div>
+                              <h4 className="font-semibold text-red-300">Architecture Generation Failed</h4>
+                              <p className="text-sm text-red-200 mt-1">{architectureError}</p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
                   </div>
                 </div>
               )}
