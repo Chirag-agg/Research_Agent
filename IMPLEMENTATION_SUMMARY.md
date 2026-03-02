@@ -21,7 +21,7 @@ The Deep Research Agent is an autonomous research and architecture generation sy
    - Cost modeling and risk analysis
 
 3. **Storage & Memory**
-   - Supabase for session persistence
+   - Firebase Firestore for session persistence
    - Qdrant Cloud for semantic memory
    - Evidence graph relationships
 
@@ -31,27 +31,31 @@ The Deep Research Agent is an autonomous research and architecture generation sy
 - **Frontend**: Next.js 14, React 18, TypeScript
 - **LLM**: Cerebras (Llama 3.1 70B/8B)
 - **Search**: Exa, Tavily
-- **Storage**: Supabase PostgreSQL
+- **Storage**: Firebase Firestore
 - **Vector DB**: Qdrant Cloud
 
 ## API Endpoints
 
 ### Research
+
 - `POST /api/research` - Submit research query
 - `GET /api/session/{session_id}` - Get session details
 - `GET /api/history` - List research history
 
 ### Architecture
-- `POST /api/generate-architecture` - Generate architecture plan
+
+- `POST /api/architecture` - Generate architecture plan
 - `POST /api/generate-deployment-runbook` - Generate deployment guide
 
 ### Memory
+
 - `POST /api/memory/add` - Store memory
 - `POST /api/memory/search` - Semantic search
 
 ## Deployment
 
 ### Development
+
 ```bash
 # Backend
 python server.py
@@ -61,6 +65,7 @@ cd frontend && npm run dev
 ```
 
 ### Production
+
 ```bash
 # Using Docker Compose
 docker compose up -d
@@ -69,10 +74,11 @@ docker compose up -d
 ## Configuration
 
 Required environment variables:
+
 - `CEREBRAS_API_KEY`
 - `EXA_API_KEY` or `TAVILY_API_KEY`
 - `FIRECRAWL_API_KEY`
-- `SUPABASE_URL` and `SUPABASE_KEY`
+- `FIREBASE_CREDENTIALS_PATH`
 - `QDRANT_URL` and `QDRANT_API_KEY`
 
 ## Architecture Output Structure

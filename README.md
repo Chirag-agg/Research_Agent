@@ -1,54 +1,48 @@
-<div align="center">
-
 # Deep Research Agent
 
-### Autonomous, Hierarchical Research System with Production Architecture Generation
+## Autonomous, Hierarchical Research System with Evidence Graphs
 
-[![Supabase](https://img.shields.io/badge/Storage-Supabase-3ecf8e?style=flat-square&logo=supabase)](https://supabase.com)
+[![Firebase](https://img.shields.io/badge/Storage-Firebase_Firestore-FFCA28?style=flat-square&logo=firebase)](https://firebase.google.com)
 [![Qdrant](https://img.shields.io/badge/Vector_DB-Qdrant-DC244C?style=flat-square)](https://qdrant.tech)
 [![Cerebras](https://img.shields.io/badge/LLM-Cerebras_Llama-FF6B35?style=flat-square)](https://cerebras.ai)
 [![Next.js](https://img.shields.io/badge/Frontend-Next.js_14-000000?style=flat-square&logo=next.js)](https://nextjs.org)
 [![Python](https://img.shields.io/badge/Python-3.11+-3776ab?style=flat-square&logo=python&logoColor=white)](https://python.org)
 
-</div>
-
 ---
 
 ## The Problem
+
 Modern software development requires not just research, but actionable architecture recommendations. Traditional research tools and simple Q&A systems fail to:
+
 1. **Generate Production-Ready Plans**: Moving from research to implementation requires architecture expertise
 2. **Validate Complex Claims**: Multi-step reasoning across disparate sources is often shallow
 3. **Provide Verifiable Provenance**: Answers lack traceable evidence and citations
 4. **Consider Constraints**: Real-world requirements (scale, budget, compliance) are ignored
 
-## The Solution: Deep Research with Architecture Generation
-The **Deep Research Agent** is an autonomous system that goes beyond traditional research—it **plans, investigates, validates, synthesizes, and generates production-ready architectures**.
+## The Solution: Deep Research with Evidence Graphs
 
-### Core Capabilities
+The Deep Research Agent goes beyond traditional research. It plans, investigates, validates, synthesizes, and produces traceable research reports.
+
+## Core Capabilities
+
 1. **Hierarchical Planning**: Breaks complex research goals into dynamic task graphs with parallel execution
 2. **Evidence-Based Research**: Every claim is backed by verified sources with full provenance tracking
-3. **Production Architecture Generation**: Automatically generates constraint-aware, 12-section architecture plans including:
-   - System diagrams (Mermaid)
-   - Technology stack recommendations
-   - Cost models and optimization strategies
-   - Risk mitigation plans
-   - Cloud-specific deployment runbooks (GCP/AWS/Azure)
+3. **Claim Extraction & Validation**: Extracts claims and validates source credibility and bias
 4. **Self-Correction**: Reflexion loops monitor quality and dynamically re-plan when gaps are detected
 
 ---
 
 ## Key Features
 
-- **🔬 Hierarchical Research** - Dynamic task graphs with dependency management and parallel execution
-- **📊 Evidence Graph** - Traceable claim provenance linking every statement to source documents
-- **🏗️ Architecture Generator** - Constraint-aware production architecture plans with cost/risk analysis
-- **☁️ Cloud Deployment** - Platform-specific runbooks for GCP, AWS, and Azure
-- **💾 Persistent Memory** - Session management with Supabase and semantic storage via Qdrant
-- **✅ Source Validation** - LLM-based evaluation of credibility, domain authority, and bias
-- **🔄 Reflexion & Re-planning** - Autonomous quality control with runtime plan modification
-- **🔗 Multi-Hop Retrieval** - Recursive citation following to find primary sources
-- **⚡ Adaptive Routing** - Fast models for simple tasks, powerful models for complex reasoning
-- **🎨 Modern UI** - Next.js interface with WebGL backgrounds and real-time updates
+- **Hierarchical Research** - Dynamic task graphs with dependency management and parallel execution
+- **Evidence Graph** - Traceable claim provenance linking every statement to source documents
+- **Claim-Centric Memory** - Evidence graph linking claims to sources with provenance
+- **Persistent Memory** - Session management with Firebase Firestore and semantic storage via Qdrant
+- **Source Validation** - LLM-based evaluation of credibility, domain authority, and bias
+- **Reflexion and Re-planning** - Autonomous quality control with runtime plan modification
+- **Multi-Hop Retrieval** - Recursive citation following to find primary sources
+- **Adaptive Routing** - Fast models for simple tasks, powerful models for complex reasoning
+- **Modern UI** - Next.js interface with WebGL backgrounds and real-time updates
 
 ---
 
@@ -56,60 +50,58 @@ The **Deep Research Agent** is an autonomous system that goes beyond traditional
 
 ```mermaid
 flowchart TB
-    User[User / Next.js UI] --> |"Query + Constraints"| API[FastAPI Server]
+   User[User / Next.js UI] --> |"Query + Constraints"| API[FastAPI Server]
 
-    subgraph Storage["Storage Layer"]
-        Supabase[(Supabase PostgreSQL)]
-        Qdrant[(Qdrant Vector DB)]
-    end
+   subgraph Storage["Storage Layer"]
+      Firestore[(Firebase Firestore)]
+      Qdrant[(Qdrant Vector DB)]
+   end
 
-    subgraph Planning["Planning Engine"]
-        API --> HPA[Hierarchical Planner]
-        HPA --> |"Decompose"| TG[Task Graph]
-    end
+   subgraph Planning["Planning Engine"]
+      API --> HPA[Hierarchical Planner]
+      HPA --> |"Decompose"| TG[Task Graph]
+   end
 
-    subgraph Execution["Research Execution"]
-        TG --> |"Dispatch"| Executor[Task Executor]
-        
-        Executor --> |"Parallel"| Agents
-        
-        subgraph Agents["Agent Swarm"]
-            WSA[Web Search<br/>Exa/Tavily]
-            CC[Citation Crawler<br/>Firecrawl]
-            CE[Claim Extractor]
-            Val[Source Validator]
-        end
-    end
+   subgraph Execution["Research Execution"]
+      TG --> |"Dispatch"| Executor[Task Executor]
+      Executor --> |"Parallel"| Agents
+      subgraph Agents["Agent Swarm"]
+         WSA[Web Search<br/>Exa/Tavily]
+         CC[Citation Crawler<br/>Firecrawl]
+         CE[Claim Extractor]
+         Val[Source Validator]
+      end
+   end
 
-    subgraph Analysis["Synthesis & Architecture"]
-        Agents --> |"Evidence"| EG[Evidence Graph]
-        EG --> |"Validated Claims"| Syn[Research Synthesizer]
-        
-        Syn --> |"Research Report"| AG[Architecture Generator]
-        AG --> |"12-Section Plan"| RG[Runbook Generator]
-        
-        EG --> |"Quality Check"| Ref[Reflexion Agent]
-        Ref --> |"Re-plan if needed"| HPA
-    end
+   subgraph Analysis["Synthesis"]
+      Agents --> |"Evidence"| EG[Evidence Graph]
+      EG --> |"Validated Claims"| Syn[Research Synthesizer]
+      Syn --> |"Research Report"| API
+      EG --> |"Quality Check"| Ref[Reflexion Agent]
+      Ref --> |"Re-plan if needed"| HPA
+   end
 
-    AG --> |"Architecture JSON"| API
-    RG --> |"Cloud Deployment MD"| API
-    API --> |"Results + Citations"| User
-    
-    %% Storage connections
-    HPA & Agents & CE -.-> Storage
+   API --> |"Results + Citations"| User
+   HPA & Agents & CE -.-> Storage
 
-    style HPA fill:#6366f1,stroke:#4338ca,color:#fff
-    style AG fill:#10b981,stroke:#059669,color:#fff
-    style EG fill:#f59e0b,stroke:#d97706,color:#fff
-    style Storage fill:#3b82f6,stroke:#2563eb,color:#fff
+   style HPA fill:#6366f1,stroke:#4338ca,color:#fff
+   style EG fill:#f59e0b,stroke:#d97706,color:#fff
+   style Storage fill:#3b82f6,stroke:#2563eb,color:#fff
 ```
+
+---
+
+## Current Status
+
+- Research orchestration, evidence graph, and claim validation are implemented and exposed via FastAPI.
+- Persistence to Firebase Firestore is optional; if unset, the API runs with in-memory session tracking only.
+- Architecture generation endpoints are available via the API and frontend.
 
 ---
 
 ## Project Structure
 
-```
+```text
 Deep-Research-Agent/
 ├── src/
 │   ├── agents/                      # Specialized Agents
@@ -121,16 +113,16 @@ Deep-Research-Agent/
 │   │   └── reflexion.py
 │   ├── architecture_generator.py    # Production Architecture Generator
 │   ├── architecture_integration.py  # Architecture Service Layer
-│   ├── planning/                    # Task Graph & Execution
+│   ├── planning/                    # Task Graph and Execution
 │   │   ├── task_graph.py
 │   │   └── executor.py
 │   ├── evidence/                    # Evidence Graph Logic
 │   │   └── graph.py
-│   ├── memory/                      # Memory & Persistence
+│   ├── memory/                      # Memory and Persistence
 │   │   ├── memory_api.py
 │   │   └── models.py
-│   ├── storage/                     # Supabase Integration
-│   │   └── supabase_store.py
+│   ├── storage/                     # Firebase Firestore Integration
+│   │   └── firestore_store.py
 │   ├── privacy/                     # PII Protection
 │   │   └── pii_scrubber.py
 │   ├── tools/                       # Search Tools (Exa, Tavily)
@@ -155,8 +147,7 @@ Deep-Research-Agent/
 │   ├── claim_extraction_prompt.md
 │   ├── source_validator_prompt.txt
 │   └── ...
-├── supabase/                        # Database Migrations
-│   └── migrations/
+├── firebase_key.json                # Firebase Service Account Key
 ├── tests/                           # Test Suite
 ├── main.py                          # CLI Orchestrator
 └── server.py                        # FastAPI Server
@@ -167,77 +158,85 @@ Deep-Research-Agent/
 ## Quick Start
 
 ### Prerequisites
+
 - Python 3.11+
 - Node.js 18+ (for frontend)
-- [Supabase](https://supabase.com) Account (for session storage)
-- [Qdrant Cloud](https://cloud.qdrant.io) Account (for semantic memory)
-- API Keys:
-  - [Cerebras](https://cerebras.ai) (for LLM inference)
-  - [Exa](https://exa.ai) or [Tavily](https://tavily.com) (for web search)
-  - [Firecrawl](https://firecrawl.dev) (for web scraping)
+- Optional: [Firebase](https://firebase.google.com) (session persistence)
+- Optional: [Qdrant](https://qdrant.tech) (vector memory, falls back to localhost)
+- API Keys (at least one LLM provider and one search provider):
+  - LLM: `GEMINI_API_KEY` or `OPENROUTER_API_KEY` or `TOGETHER_API_KEY` or `CEREBRAS_API_KEY`
+  - Search: [Exa](https://exa.ai) (`EXA_API_KEY`) or [Tavily](https://tavily.com) (`TAVILY_API_KEY`)
+  - Scraping: [Firecrawl](https://firecrawl.dev) (`FIRECRAWL_API_KEY`)
 
 ### Backend Setup
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/Chirag-agg/Research_Agent.git
    cd Research_Agent
    ```
 
 2. **Install Python dependencies**
+
    ```bash
    pip install -r requirements.txt
    ```
 
 3. **Configure Environment**
-   Create a `.env` file with your API keys:
-   ```ini
-   # LLM Configuration
-   CEREBRAS_API_KEY=your_cerebras_key
-   DEFAULT_MODEL=meta-llama/Llama-3.1-70B-Instruct-Turbo
-   FAST_MODEL=meta-llama/Llama-3.1-8B-Instruct-Turbo
 
-   # Search APIs
+   Create a `.env` file (only include what you use):
+
+   ```ini
+   # LLM (pick one provider)
+   GEMINI_API_KEY=your_gemini_key
+   # or OPENROUTER_API_KEY=your_openrouter_key
+   # or TOGETHER_API_KEY=your_together_key
+   # or CEREBRAS_API_KEY=your_cerebras_key
+   # Optional overrides
+   DEFAULT_MODEL=gemma-3-27b-it
+   FAST_MODEL=gemma-3-27b-it
+
+   # Search and scraping
    EXA_API_KEY=your_exa_key
    TAVILY_API_KEY=your_tavily_key
    FIRECRAWL_API_KEY=your_firecrawl_key
 
-   # Storage
-   SUPABASE_URL=your_supabase_url
-   SUPABASE_KEY=your_supabase_key
+   # Storage (optional; leave unset to run without Firestore persistence)
+   FIREBASE_CREDENTIALS_PATH=./firebase_key.json
+   FIREBASE_AUTH_ENABLED=false
 
-   # Vector DB
-   QDRANT_URL=your_qdrant_cluster_url
+   # Vector DB (optional; defaults to local Qdrant if URL absent)
+   QDRANT_URL=your_qdrant_url
    QDRANT_API_KEY=your_qdrant_api_key
    ```
 
-4. **Set up Supabase**
+4. **Set up Firebase (optional)**
+
    ```bash
-   # Install Supabase CLI (if not already installed)
-   scoop install supabase  # Windows
-   # or brew install supabase/tap/supabase  # macOS
-
-   # Link your project
-   supabase link --project-ref your_project_ref
-
-   # Push migrations
-   supabase db push
+   # 1. Go to Firebase Console → Project Settings → Service Accounts
+   # 2. Generate a new private key and save as firebase_key.json in the project root
+   # 3. Set the path in .env:
+   FIREBASE_CREDENTIALS_PATH=./firebase_key.json
    ```
 
 ### Frontend Setup
 
 1. **Navigate to frontend directory**
+
    ```bash
    cd frontend
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    # or pnpm install
    ```
 
 3. **Start development server**
+
    ```bash
    npm run dev
    ```
@@ -245,77 +244,37 @@ Deep-Research-Agent/
 ### Running the Application
 
 1. **Start the backend API**
+
    ```bash
    python server.py
    ```
+
    Server runs at `http://localhost:8000`
 
 2. **Start the frontend** (in a separate terminal)
+
    ```bash
    cd frontend
    npm run dev
    ```
+
    UI available at `http://localhost:3000`
 
 3. **Submit a research query**
+
    - Navigate to `http://localhost:3000/research`
    - Enter your research question
-   - Configure architecture constraints (DAU, latency, budget, compliance)
    - Click "Start Research" and wait for results
-   - Generate production architecture plan from the research findings
+   - Inspect claims, sources, and evidence graph in the UI
 
 ---
 
-## API Endpoints
+## API Endpoints (backend/server.py)
 
-### Research
-- `POST /api/research` - Submit a research query
-- `GET /api/session/{session_id}` - Get session details
-- `GET /api/history` - List research history
-
-### Architecture Generation
-- `POST /api/generate-architecture` - Generate production architecture plan
-  ```json
-  {
-    "system_name": "E-commerce Platform",
-    "recommended_solution": "Microservices with event-driven architecture...",
-    "constraints": {
-      "daily_active_users": 100000,
-      "peak_rps": 500,
-      "latency_target_ms": 200,
-      "budget_min_monthly": 5000,
-      "budget_max_monthly": 15000,
-      "compliance": ["PCI-DSS", "SOC2"]
-    }
-  }
-  ```
-
-- `POST /api/generate-deployment-runbook` - Generate cloud-specific deployment guide
-  - Supports GCP, AWS, and Azure
-  - Returns markdown with step-by-step instructions
-
-### Memory
-- `POST /api/memory/add` - Store memory/context
-- `POST /api/memory/search` - Semantic search across memories
-
----
-
-## Architecture Generator Output
-
-The system generates comprehensive 12-section architecture plans:
-
-1. **Executive Summary** - High-level overview and recommendations
-2. **System Diagram** - Mermaid architecture diagram
-3. **Components** - Detailed component breakdown with responsibilities
-4. **Technology Stack** - Concrete tooling recommendations with alternatives
-5. **Deployment Architecture** - Multi-environment setup (dev/staging/prod)
-6. **Scalability Strategy** - Horizontal/vertical scaling approaches
-7. **Observability Plan** - Monitoring, logging, and tracing setup
-8. **Security & Compliance** - Controls mapping and security measures
-9. **Cost Model** - Detailed cost breakdown with optimization strategies
-10. **Risk Mitigation** - Identified risks with probability, impact, and RTO
-11. **Future Evolution** - Roadmap for scaling and feature expansion
-12. **Metadata** - Constraints, timestamp, and version info
+- `POST /api/research` - Start a research run (background task)
+- `GET /api/research/{session_id}` - Check live status or result
+- `GET /api/history` - List recent sessions (if Firestore configured)
+- `GET /health` - Health check
 
 ---
 
@@ -323,21 +282,25 @@ The system generates comprehensive 12-section architecture plans:
 
 ### Production Deployment
 
-**Backend (FastAPI + Python)**
+#### Backend (FastAPI + Python)
+
 - Deploy on Railway, Render, or Fly.io
 - Environment variables configured via platform dashboard
 - Recommended: 2GB RAM, 1 vCPU minimum
 
-**Frontend (Next.js)**
+#### Frontend (Next.js)
+
 - Deploy on Vercel (recommended) or Netlify
 - Automatic deployments from GitHub
 - Environment variable: `NEXT_PUBLIC_API_URL`
 
-**Database**
-- Managed Supabase instance (included in free tier)
+#### Database
+
+- Managed Firebase Firestore instance (included in free tier)
 - Vector storage via Qdrant Cloud
 
 ### Docker Deployment
+
 ```bash
 # Build and run with docker-compose
 docker-compose up -d
@@ -349,16 +312,15 @@ docker-compose up -d
 
 - **Backend**: FastAPI, Python 3.11+
 - **Frontend**: Next.js 14, React 18, TypeScript, Tailwind CSS
-- **LLM**: Cerebras (Llama 3.1 70B/8B models)
+- **LLM**: Gemini / OpenRouter / Together / Cerebras (select via env)
 - **Search**: Exa API, Tavily API
 - **Web Scraping**: Firecrawl
-- **Storage**: Supabase (PostgreSQL with pgvector)
-- **Vector DB**: Qdrant Cloud
+- **Storage**: Optional Firebase Firestore
+- **Vector DB**: Qdrant (cloud or local)
 - **UI Components**: shadcn/ui, Radix UI
 - **Animations**: OGL WebGL renderer
 
 ---
-
 
 ## Contributing
 
@@ -374,7 +336,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache License 2.0. See [LICENSE](LICENSE) for details.
 
 ---
 
@@ -382,15 +344,9 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 - Powered by [Cerebras](https://cerebras.ai) inference
 - Search capabilities by [Exa](https://exa.ai) and [Tavily](https://tavily.com)
-- Storage by [Supabase](https://supabase.com)
+- Storage by [Firebase](https://firebase.google.com)
 - Vector search by [Qdrant](https://qdrant.tech)
 
 ---
 
-<div align="center">
-
-**Built by [Chirag Aggarwal](https://github.com/Chirag-agg)**
-
-</div>
-
-
+Built by [Chirag Aggarwal](https://github.com/Chirag-agg)
