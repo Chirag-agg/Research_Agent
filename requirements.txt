@@ -35,7 +35,7 @@ python-multipart>=0.0.6
 openai>=1.0.0
 
 # V2 Storage & Memory
-supabase>=2.0.0
+firebase-admin>=6.0.0
 qdrant-client>=1.7.0
 
 # V2 Async Support
