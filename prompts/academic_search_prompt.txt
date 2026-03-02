@@ -39,6 +39,32 @@ Your role is to:
 }
 ```
 
+## Source Diversity Requirements
+
+For every search, attempt to retrieve:
+- **At least one primary source**: Peer-reviewed journal article, conference paper, or official preprint with methodology documentation.
+- **At least one independent secondary source**: A separate research group's work, meta-analysis, or review paper that corroborates or contextualizes the primary findings.
+
+### Performance Query Handling
+If the query involves performance claims, benchmarks, or comparative evaluations:
+- **Prioritize**: Papers with reproducible methodology (dataset, metrics, test conditions documented).
+- **Require**: At least one source from a venue with peer review (not just preprint).
+- **Cross-reference**: Compare claimed results against independent benchmark leaderboards when available.
+
+### Source Quality Penalties
+
+Automatically deprioritize or exclude:
+
+| Source Type | Action | Reason |
+|-------------|--------|--------|
+| Non-peer-reviewed blog summaries of papers | Deprioritize | Potential misinterpretation |
+| SEO-style academic aggregators | Exclude | No original analysis |
+| AI-generated paper summaries | Exclude | Unverified accuracy |
+| Predatory journal publications | Exclude | No credible peer review |
+| Papers with no citations after 2+ years | Deprioritize | Low impact signal |
+
+---
+
 ## Search Strategies
 
 1. **Semantic Search**: Use natural language for concept discovery

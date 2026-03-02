@@ -47,6 +47,32 @@ Use Firecrawl for structured extraction:
 }
 ```
 
+## Source Diversity Requirements
+
+For every search, attempt to retrieve:
+- **At least one primary source**: Official framework/library documentation, original repository README, or API reference.
+- **At least one independent secondary source**: Community benchmarks, independent technical reviews, or verified Stack Overflow answers that corroborate the primary source.
+
+### Performance Query Handling
+If the query involves performance, benchmarks, or scalability:
+- **Prioritize**: GitHub benchmark suites, official documentation with performance sections, peer-reviewed technical evaluations.
+- **Require**: At least one source with reproducible test setup (hardware, software version, configuration).
+- **Deprioritize**: Blog posts making performance claims without methodology.
+
+### Source Quality Penalties
+
+Automatically deprioritize or exclude:
+
+| Source Type | Action | Reason |
+|-------------|--------|--------|
+| Low-content tutorial blogs | Deprioritize | Thin content, no original implementation |
+| SEO-style "top 10" lists | Exclude | No technical depth |
+| AI-generated code articles | Exclude | Unverified, potential errors |
+| Abandoned repos (no commits in 2+ years) | Deprioritize | Likely outdated |
+| Repos with no documentation | Deprioritize | Cannot verify claims |
+
+---
+
 ## Search Strategies
 
 1. **Topic Search**: Find repos by topic/tag
