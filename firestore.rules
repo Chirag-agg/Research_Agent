@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Research sessions — authenticated users can read/write their own
+    match /research_sessions/{sessionId} {
+      allow read, write: if request.auth != null
+                         && resource == null  // create
+                         || resource.data.user_id == request.auth.uid;
+    }
+
+    // Research results — same ownership rule
+    match /research_results/{sessionId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Research metrics — read-only for users, write via server SDK
+    match /research_metrics/{sessionId} {
+      allow read: if request.auth != null;
+      allow write: if false;  // server-side only via Admin SDK
+    }
+
+    // User preferences
+    match /users/{userId} {
+      allow read, write: if request.auth != null
+                         && request.auth.uid == userId;
+    }
+  }
+}
