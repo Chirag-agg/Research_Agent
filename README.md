@@ -37,12 +37,13 @@ The Deep Research Agent goes beyond traditional research. It plans, investigates
 - **Hierarchical Research** - Dynamic task graphs with dependency management and parallel execution
 - **Evidence Graph** - Traceable claim provenance linking every statement to source documents
 - **Claim-Centric Memory** - Evidence graph linking claims to sources with provenance
+- **Intelligent Chat History** - LLM-generated session names, persistent storage, and one-click deletion
 - **Persistent Memory** - Session management with Firebase Firestore and semantic storage via Qdrant
 - **Source Validation** - LLM-based evaluation of credibility, domain authority, and bias
 - **Reflexion and Re-planning** - Autonomous quality control with runtime plan modification
 - **Multi-Hop Retrieval** - Recursive citation following to find primary sources
 - **Adaptive Routing** - Fast models for simple tasks, powerful models for complex reasoning
-- **Modern UI** - Next.js interface with WebGL backgrounds and real-time updates
+- **Modern UI** - Next.js interface with WebGL backgrounds, real-time updates, and smart history management
 
 ---
 
@@ -96,6 +97,28 @@ flowchart TB
 - Research orchestration, evidence graph, and claim validation are implemented and exposed via FastAPI.
 - Persistence to Firebase Firestore is optional; if unset, the API runs with in-memory session tracking only.
 - Architecture generation endpoints are available via the API and frontend.
+
+---
+
+## Chat History & Session Management
+
+The application now includes intelligent session management with LLM-generated chat names:
+
+### Features
+
+- **Automatic Session Naming** - LLM generates concise, meaningful names for each research session
+- **Persistent History** - All sessions are saved to Firebase Firestore and available across app reloads
+- **Quick Deletion** - Delete sessions with a single click (hover over history items for trash icon)
+- **Smart Fallback** - If LLM naming fails, uses first few words from query as fallback
+- **Session Continuation** - Resume previous research sessions and refine results
+
+### How It Works
+
+1. When you start a new research session, an LLM concisely summarizes the query
+2. The session and its generated name are immediately saved to Firestore
+3. Your chat history sidebar displays these intelligent names instead of raw queries
+4. Click any history item to reload that session's full context
+5. Hover over items to reveal the delete button for easy cleanup
 
 ---
 
@@ -211,13 +234,20 @@ Deep-Research-Agent/
    QDRANT_API_KEY=your_qdrant_api_key
    ```
 
-4. **Set up Firebase (optional)**
+4. **Set up Firebase (for persistent history and chat names)**
 
    ```bash
-   # 1. Go to Firebase Console → Project Settings → Service Accounts
-   # 2. Generate a new private key and save as firebase_key.json in the project root
-   # 3. Set the path in .env:
+   # 1. Create a Firebase project at https://firebase.google.com
+   # 2. Go to Project Settings → Service Accounts → Generate New Private Key
+   # 3. Save the JSON file as firebase_key.json in the project root
+   # 4. Set in .env:
    FIREBASE_CREDENTIALS_PATH=./firebase_key.json
+   
+   # With Firebase configured:
+   # - Chat sessions are automatically saved to Firestore
+   # - LLM generates intelligent names for each session
+   # - Sessions can be deleted with one click
+   # - Full history is available on app reload
    ```
 
 ### Frontend Setup
@@ -271,9 +301,20 @@ Deep-Research-Agent/
 
 ## API Endpoints (backend/server.py)
 
+### Research Operations
+
 - `POST /api/research` - Start a research run (background task)
 - `GET /api/research/{session_id}` - Check live status or result
-- `GET /api/history` - List recent sessions (if Firestore configured)
+- `GET /api/results/{session_id}` - Retrieve research results and evidence graph
+
+### History Management
+
+- `GET /api/history` - List recent sessions with chat names (Firestore)
+- `POST /api/generate-chat-name` - Generate intelligent session name using LLM
+- `DELETE /api/research/{session_id}` - Delete a research session
+
+### System
+
 - `GET /health` - Health check
 
 ---
@@ -310,13 +351,13 @@ docker-compose up -d
 
 ## Technology Stack
 
-- **Backend**: FastAPI, Python 3.11+
+- **Backend**: FastAPI, Python 3.11+, Pydantic for validation
 - **Frontend**: Next.js 14, React 18, TypeScript, Tailwind CSS
-- **LLM**: Gemini / OpenRouter / Together / Cerebras (select via env)
+- **Database**: Firebase Firestore (persistent session storage and chat names)
+- **LLM**: Cerebras / Gemini / OpenRouter / Together (research + intelligent naming)
 - **Search**: Exa API, Tavily API
 - **Web Scraping**: Firecrawl
-- **Storage**: Optional Firebase Firestore
-- **Vector DB**: Qdrant (cloud or local)
+- **Vector DB**: Qdrant (semantic memory and claim linking)
 - **UI Components**: shadcn/ui, Radix UI
 - **Animations**: OGL WebGL renderer
 
